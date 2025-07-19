@@ -38,6 +38,8 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Scenes/Scene.h
         src/Scenes/BattleScene.cpp
         src/Scenes/BattleScene.h
+        src/Scenes/ChooseBattlefieldScene.cpp
+        src/Scenes/ChooseBattlefieldScene.h
         assets/assets.qrc
         src/Items/Maps/Map.cpp
         src/Items/Maps/Map.h

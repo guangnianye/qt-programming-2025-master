@@ -8,6 +8,8 @@
 #include <QGraphicsView>
 #include <QMainWindow>
 #include "Scenes/Scene.h"
+#include "Scenes/ChooseBattlefieldScene.h"
+#include "Scenes/BattleScene.h"
 
 class MyGame : public QMainWindow {
 Q_OBJECT
@@ -15,9 +17,17 @@ Q_OBJECT
 public:
     explicit MyGame(QWidget *parent = nullptr);
 
+private slots:
+    void onMapSelected(int mapId);
+
 private:
-    Scene *battleScene;
-    QGraphicsView *view;
+    void switchToChooseMapScene();
+    void switchToBattleScene(int mapId);
+    
+    Scene *currentScene{nullptr};
+    ChooseBattlefieldScene *chooseMapScene{nullptr};
+    BattleScene *battleScene{nullptr};
+    QGraphicsView *view{nullptr};
 };
 
 

@@ -118,6 +118,10 @@ void BattleScene::keyPressEvent(QKeyEvent *event) {
                 enemy->setAttacking(true);
             }
             break;
+        case Qt::Key_Escape: // 返回地图选择
+            qDebug() << "返回地图选择";
+            emit returnToMapSelection();
+            break;
         default:
             Scene::keyPressEvent(event);
     }

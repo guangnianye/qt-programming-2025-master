@@ -27,6 +27,11 @@ void Scene::startLoop() {
     timer->start(1000 / 90); // 90FPS
 }
 
+void Scene::stopLoop() {
+    timer->stop();
+    lastTime = -1; // 重置时间，为下次启动做准备
+}
+
 void Scene::processInput() {
 
 }

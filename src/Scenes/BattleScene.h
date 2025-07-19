@@ -49,6 +49,14 @@ private:
     Character *character;
     Character *enemy; // 可能的敌人角色
     Armor *spareArmor;
+    // 血量显示UI元素
+    QGraphicsRectItem *healthBarBackground;  // 血量条背景
+    QGraphicsRectItem *healthBarForeground;  // 血量条前景
+    QGraphicsTextItem *healthText;           // 血量数值文本
+
+signals:
+    void returnToMapSelection();
+
 };
 
 

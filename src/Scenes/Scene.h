@@ -16,6 +16,8 @@ public:
 
     void startLoop();
 
+    void stopLoop();
+
     virtual void processInput();
 
     virtual void processMovement();
