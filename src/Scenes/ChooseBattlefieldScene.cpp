@@ -10,6 +10,7 @@
 #include <QFontInfo>
 #include <QFontDatabase>
 #include <QGraphicsDropShadowEffect>
+#include <QPixmap>
 #include <QBrush>
 #include <QPen>
 #include <QMainWindow>
@@ -21,8 +22,19 @@ ChooseBattlefieldScene::ChooseBattlefieldScene(QObject *parent) : Scene(parent) 
     // 设置场景尺寸
     setSceneRect(0, 0, 960, 640);
     
-    // 可爱的淡色背景，准备放置背景图片
-    setBackgroundBrush(QBrush(QColor(240, 248, 255)));
+    // 加载背景图片
+    QPixmap backgroundPixmap(":/Backgrounds/ChooseBattlefieldSceneBackground.png");
+    if (!backgroundPixmap.isNull()) {
+        // 如果图片加载成功，设置为背景
+        backgroundImage = new QGraphicsPixmapItem(backgroundPixmap);
+        backgroundImage->setPos(0, 0);
+        addItem(backgroundImage);
+        qDebug() << "背景图片加载成功，尺寸:" << backgroundPixmap.size();
+    } else {
+        // 如果图片加载失败，使用纯色背景作为备用
+        setBackgroundBrush(QBrush(QColor(240, 248, 255)));
+        qDebug() << "背景图片加载失败，使用纯色背景";
+    }
     
     // 初始化选中索引
     selectedMapIndex = 0;
@@ -80,7 +92,7 @@ void ChooseBattlefieldScene::setupUI() {
     qreal spacing = 30;
     qreal totalWidth = 5 * buttonWidth + 4 * spacing;
     qreal startX = (sceneRect().width() - totalWidth) / 2;
-    qreal buttonY = 250;
+    qreal buttonY = 380; // 调整到提示文字上方一点点 (原来是250，提示文字在500)
     
     for (int i = 0; i < 5; i++) {
         // 计算按钮位置
@@ -136,7 +148,7 @@ void ChooseBattlefieldScene::setupUI() {
     
     // 添加操作提示
     QGraphicsTextItem *hintText = new QGraphicsTextItem("使用方向键或鼠标选择地图 | Enter确认 | ESC退出");
-    hintText->setDefaultTextColor(QColor(147, 112, 219)); // 可爱的紫色
+    hintText->setDefaultTextColor(QColor(180, 150, 200, 180)); // 更淡的紫色，增加透明度
     hintText->setFont(QFont("Arial", 14));
     hintText->setPos((sceneRect().width() - hintText->boundingRect().width()) / 2, 500);
     addItem(hintText);
@@ -146,21 +158,21 @@ void ChooseBattlefieldScene::updateButtonStyle(QGraphicsRectItem *button, int in
     if (!button) return;
     
     if (index == selectedMapIndex) {
-        // 选中状态：可爱的粉色渐变
+        // 选中状态：更淡的粉色渐变
         QLinearGradient selectedGradient(0, 0, 0, button->rect().height());
-        selectedGradient.setColorAt(0, QColor(255, 182, 193));   // 淡粉色
-        selectedGradient.setColorAt(1, QColor(255, 105, 180));   // 热粉色
+        selectedGradient.setColorAt(0, QColor(255, 182, 193, 200));   // 淡粉色，增加透明度
+        selectedGradient.setColorAt(1, QColor(255, 105, 180, 200));   // 热粉色，增加透明度
         
         button->setBrush(QBrush(selectedGradient));
-        button->setPen(QPen(QColor(255, 20, 147), 3));  // 深粉色边框
+        button->setPen(QPen(QColor(255, 20, 147, 150), 3));  // 深粉色边框，更淡
     } else {
-        // 普通状态：可爱的紫色渐变
+        // 普通状态：更淡的紫色渐变
         QLinearGradient normalGradient(0, 0, 0, button->rect().height());
-        normalGradient.setColorAt(0, QColor(186, 85, 211));   // 兰花紫
-        normalGradient.setColorAt(1, QColor(147, 112, 219));  // 中紫罗兰色
+        normalGradient.setColorAt(0, QColor(186, 85, 211, 160));   // 兰花紫，更淡
+        normalGradient.setColorAt(1, QColor(147, 112, 219, 160));  // 中紫罗兰色，更淡
         
         button->setBrush(QBrush(normalGradient));
-        button->setPen(QPen(QColor(138, 43, 226), 2));  // 蓝紫色边框
+        button->setPen(QPen(QColor(138, 43, 226, 120), 2));  // 蓝紫色边框，更淡
     }
 }
 
@@ -270,11 +282,11 @@ void ChooseBattlefieldScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
             // 简单的悬停效果：稍微提高亮度
             QLinearGradient hoverGradient(0, 0, 0, button->rect().height());
             if (i == selectedMapIndex) {
-                hoverGradient.setColorAt(0, QColor(255, 192, 203));  // 更亮的粉色
-                hoverGradient.setColorAt(1, QColor(255, 130, 200));
+                hoverGradient.setColorAt(0, QColor(255, 192, 203, 220));  // 更亮的粉色，但保持淡色
+                hoverGradient.setColorAt(1, QColor(255, 130, 200, 220));
             } else {
-                hoverGradient.setColorAt(0, QColor(206, 105, 231)); // 更亮的紫色
-                hoverGradient.setColorAt(1, QColor(167, 132, 239));
+                hoverGradient.setColorAt(0, QColor(206, 105, 231, 180)); // 更亮的紫色，但保持淡色
+                hoverGradient.setColorAt(1, QColor(167, 132, 239, 180));
             }
             button->setBrush(QBrush(hoverGradient));
             break;
