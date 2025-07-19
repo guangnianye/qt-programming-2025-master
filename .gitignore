@@ -1,0 +1,56 @@
+# ===================================
+# Qt 项目通用忽略规则
+# ===================================
+
+# 构建目录
+[Bb]uild*/
+[Bb]uild-*
+release/
+debug/
+*.build/
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+
+# VS Code 配置
+.vscode/*
+
+# JetBrains IDE 配置
+.idea/
+
+# ===================================
+# 系统与编译生成文件
+# ===================================
+# 可执行文件
+*.exe
+*.app
+*.dll
+*.so
+*.a
+*.lib
+*.dylib
+
+# 中间文件
+*.o
+*.obj
+*.patch
+*.moc
+*.qm
+*.qrc.depends
+
+# 缓存文件
+*.autosave
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# ===================================
+# CMake 特有规则（如使用CMake）
+# ===================================
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+Makefile
+*.cmake

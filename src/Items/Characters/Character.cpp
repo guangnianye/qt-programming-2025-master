@@ -1,0 +1,529 @@
+//
+// Created by gerw on 8/20/24.
+//
+
+#include <QTransform>
+#include "Character.h"
+#include "../Maps/Map.h"
+#include <QDebug>
+
+Character::Character(QGraphicsItem *parent):Item(parent,"") {
+//    ellipseItem = new QGraphicsEllipseItem(-5, -5, 10, 10, this);
+//    // Optionally, set some properties of the ellipse
+//    ellipseItem->setBrush(Qt::green);          // Fill color
+//    ellipseItem->setZValue(1);
+    
+    // 初始化血量系统
+    maxHealth = PhysicsConstants::DEFAULT_MAX_HEALTH;
+    currentHealth = maxHealth;
+
+}
+
+
+bool Character::isLeftDown() const {
+    return leftDown;
+}
+
+void Character::setLeftDown(bool leftDown) {
+    Character::leftDown = leftDown;
+}
+
+bool Character::isRightDown() const {
+    return rightDown;
+}
+
+void Character::setRightDown(bool rightDown) {
+    Character::rightDown = rightDown;
+}
+
+bool Character::isUpDown() const {
+    return upDown;
+}
+
+void Character::setUpDown(bool upDown) {
+    Character::upDown = upDown;
+}
+
+bool Character::isPickDown() const {
+    return pickDown;
+}
+
+void Character::setPickDown(bool pickDown) {
+    Character::pickDown = pickDown;
+}
+
+void Character::setAttacking(bool attacking) {
+    Character::attackDown = attacking;
+}
+
+void Character::processAttack() {
+    const qreal frameTime = 11.11; // 90FPS，每帧约11.11毫秒
+    
+    // 更新攻击后摇计时器
+    if (attackRecoveryTimer > 0) {
+        attackRecoveryTimer -= frameTime;
+        // 后摇结束，恢复正常显示
+        if (attackRecoveryTimer <= 0) {
+            updatePixmapItem("normal");
+            // 恢复正常状态时保持当前方向
+            setDirection(directionRight);
+            qDebug() << "Attack recovery finished";
+        }
+    }
+    
+    // 更新攻击间隔计时器（用于长按连击）
+    if (attackIntervalTimer > 0) {
+        attackIntervalTimer -= frameTime;
+    }
+    
+    // 瞬间攻击逻辑：isPerformingAttack只用作标记，立即处理后立即重置
+    if (isPerformingAttack) {
+        // 攻击逻辑在这一帧内立即完成
+        qDebug() << "Attack logic executed immediately";
+        isPerformingAttack = false; // 立即重置
+        attackTimer = 0;
+        // 开始后摇显示
+        qDebug() << "Attack logic finished, starting recovery for:" << PhysicsConstants::ATTACK_RECOVERY << "ms";
+    }
+    
+    // 处理攻击输入
+    if (attackDown) {
+        // 检查是否可以攻击：不在攻击状态、不在后摇状态、不在间隔状态
+        if (!isPerformingAttack && attackRecoveryTimer <= 0 && attackIntervalTimer <= 0) {
+            // 触发瞬间攻击
+            isPerformingAttack = true; // 设置标记，将在下一帧立即处理
+            updatePixmapItem("attack");
+            // 攻击时保持当前方向
+            setDirection(directionRight);
+            attackRecoveryTimer = PhysicsConstants::ATTACK_RECOVERY;
+            // 设置间隔计时器，防止连击过快
+            attackIntervalTimer = PhysicsConstants::ATTACK_INTERVAL;
+            qDebug() << "Attack triggered! Recovery duration:" << PhysicsConstants::ATTACK_RECOVERY << "ms, Interval:" << PhysicsConstants::ATTACK_INTERVAL << "ms";
+        }
+        // 如果在冷却期间，显示提示（但不要每帧都输出）
+        else if ((attackRecoveryTimer > 0 || attackIntervalTimer > 0) && !lastAttackDown) {
+            qDebug() << "Attack blocked! Recovery remaining:" << attackRecoveryTimer << "ms, Interval remaining:" << attackIntervalTimer << "ms";
+        }
+    }
+    
+    lastAttackDown = attackDown;
+}
+
+bool Character::isCurrentlyAttacking() const {
+    return isPerformingAttack;
+}
+
+QRectF Character::getAttackRange() const {
+    // 根据角色朝向计算攻击范围
+    QRectF characterRect = boundingRect();
+    qreal range = PhysicsConstants::ATTACK_RANGE;
+    
+    if (directionRight) {
+        // 向右攻击
+        return QRectF(pos().x() + characterRect.width(), 
+                      pos().y(), 
+                      range, 
+                      characterRect.height());
+    } else {
+        // 向左攻击
+        return QRectF(pos().x() - range, 
+                      pos().y(), 
+                      range, 
+                      characterRect.height());
+    }
+}
+
+bool Character::isSquatting() const {
+    return squatting;
+}
+
+void Character::setSquatting(bool squatting) {
+    Character::squatting = squatting;
+}
+
+const QPointF &Character::getVelocity() const {
+    return velocity;
+}
+
+void Character::setVelocity(const QPointF &velocity) {
+    Character::velocity = velocity;
+}
+
+void Character::processInput() {
+    // 如果角色死亡，不处理输入
+    if (!isAlive()) {
+        return;
+    }
+    
+    auto newVelocity = velocity; // 保持当前的Y方向速度
+    const auto moveSpeed = PhysicsConstants::HORIZONTAL_MOVE_SPEED; // 使用物理常量
+    
+    // 水平移动 (只影响X方向速度)
+    newVelocity.setX(0); // 重置水平速度
+    
+    // 处理水平移动和方向
+    if (isLeftDown()) {
+        newVelocity.setX(-moveSpeed);
+        setDirection(false); // 设置方向为左
+    }
+    if (isRightDown()) {
+        newVelocity.setX(moveSpeed);
+        setDirection(true); // 设置方向为右
+    }
+    
+    // 跳跃 (只在地面上时才能跳跃)
+    if (isUpDown() && onGround && !isSquatting()) {
+        newVelocity.setY(jumpSpeed);
+        setOnGround(false);
+    }
+
+    // 处理蹲下状态
+    if (isSquatting() && onGround) {
+        // 如果蹲下，设置Y方向速度为0
+        newVelocity.setY(0);
+        newVelocity.setX(0); // 蹲下时不移动
+        updatePixmapItem("duck");
+        // 蹲下时也要保持正确的方向
+        setDirection(directionRight);
+    }
+
+    // 处理正常状态的显示（只有在不处于特殊状态时）
+    if (!isSquatting() && (attackRecoveryTimer <= 0)) {
+        // 保持当前方向的变换
+        setDirection(directionRight);
+        // 只有在不处于攻击后摇期间才设置为normal
+        updatePixmapItem("normal");
+    }
+    
+    setVelocity(newVelocity);
+
+    if (!lastPickDown && pickDown) { // first time pickDown
+        picking = true;
+    } else {
+        picking = false;
+    }
+    lastPickDown = pickDown;
+
+    // 处理攻击
+    processAttack();
+    
+    // 处理不同种类平台的逻辑
+    processPlatformstypes();
+}
+
+bool Character::isPicking() const {
+    return picking;
+}
+
+Armor *Character::pickupArmor(Armor *newArmor) {
+    auto oldArmor = armor;
+    if (oldArmor != nullptr) {
+        oldArmor->unmount();
+        oldArmor->setPos(newArmor->pos());
+        oldArmor->setParentItem(parentItem());
+    }
+    newArmor->setParentItem(this);
+    newArmor->mountToParent();
+    armor = newArmor;
+    return oldArmor;
+}
+
+#pragma region Gravity System
+// 重力系统方法实现
+bool Character::isOnGround() const {
+    return onGround;
+}
+
+void Character::setOnGround(bool onGround) {
+    Character::onGround = onGround;
+}
+
+qreal Character::getGravityAcceleration() const {
+    return gravityAcceleration;
+}
+
+void Character::applyGravity(qreal deltaTime) {
+    if (!onGround) {
+        // 应用重力加速度 (deltaTime 以毫秒为单位，需要转换为秒)
+        qreal deltaTimeInSeconds = deltaTime / 1000.0;
+        velocity.setY(velocity.y() + gravityAcceleration * deltaTimeInSeconds);
+        
+        // 限制最大下降速度
+        // if (velocity.y() > maxFallSpeed) {
+        //     velocity.setY(maxFallSpeed);
+        // }
+    }
+}
+
+void Character::handleGroundCollision(qreal groundHeight) {
+    // 获取角色当前位置
+    qreal characterX1 = pos().x();
+    qreal characterX2 = pos().x();
+    if(directionRight) {
+        characterX1 = pos().x() - boundingRect().width() + edgeTolerance;
+        characterX2 = pos().x() - edgeTolerance;
+    } else {
+        characterX1 = pos().x() + boundingRect().width() - edgeTolerance;
+        characterX2 = pos().x() + edgeTolerance;
+    }
+    qreal characterBottom = pos().y();
+    
+    // 检查当前位置是否有平台
+    if (map) {
+        // 查找最接近的平台
+        const Platform* nearestPlatform = map->getNearestPlatform(QPointF(characterX1, characterBottom + boundingRect().height()),QPointF(characterX2, characterBottom + boundingRect().height()));
+        
+        if (nearestPlatform && characterBottom + boundingRect().height() >= nearestPlatform->height && velocity.y() >= 0) {
+            // 检查角色是否真的在平台上（X坐标范围内）
+            if ((nearestPlatform->containsX(characterX1))||(nearestPlatform->containsX(characterX2))) {
+                // 角色着地在平台上
+                setOnGround(true);
+                velocity.setY(0);
+                // 调整位置确保不穿透平台
+                setPos(pos().x(), nearestPlatform->height - boundingRect().height());
+                return;
+            }
+        }
+        
+        // 检查是否需要离开地面
+        if (onGround) {
+            // 获取当前位置的所有平台高度
+            QVector<qreal> heights = map->getAllFloorHeightsAt(characterX1);
+            bool foundSupportingPlatform = false;
+            
+            for (qreal height : heights) {
+                if (qAbs(characterBottom + boundingRect().height() - height) <= PhysicsConstants::GROUND_TOLERANCE) {
+                    foundSupportingPlatform = true;
+                    break;
+                }
+            }
+            
+            if (!foundSupportingPlatform) {
+                setOnGround(false);
+            }
+        }
+    } 
+}
+
+#pragma endregion
+
+#pragma region Health System
+// 血量系统方法实现
+qreal Character::getCurrentHealth() const {
+    return currentHealth;
+}
+
+qreal Character::getMaxHealth() const {
+    return maxHealth;
+}
+
+void Character::setMaxHealth(qreal maxHealth) {
+    Character::maxHealth = maxHealth;
+    // 如果当前血量超过新的最大血量，调整到最大血量
+    if (currentHealth > maxHealth) {
+        currentHealth = maxHealth;
+    }
+}
+
+void Character::takeDamage(qreal damage) {
+    if (damage > 0 && isAlive()) {
+        currentHealth -= damage;
+        if (currentHealth < 0) {
+            currentHealth = 0;
+        }
+        qDebug() << "Character took" << damage << "damage. Health:" << currentHealth << "/" << maxHealth;
+        
+        // 如果血量归零，角色死亡
+        if (!isAlive()) {
+            qDebug() << "Character died!";
+            // 这里可以添加死亡效果
+        }
+    }
+}
+
+void Character::heal(qreal amount) {
+    if (amount > 0 && isAlive()) {
+        currentHealth += amount;
+        if (currentHealth > maxHealth) {
+            currentHealth = maxHealth;
+        }
+        qDebug() << "Character healed" << amount << "points. Health:" << currentHealth << "/" << maxHealth;
+    }
+}
+
+bool Character::isAlive() const {
+    return currentHealth > 0;
+}
+
+qreal Character::getHealthPercentage() const {
+    if (maxHealth <= 0) return 0;
+    return (currentHealth / maxHealth) * 100.0;
+}
+
+#pragma endregion
+
+#pragma region Map System
+
+void Character::setMap(Map* map) {
+    this->map = map;
+}
+
+Map* Character::getMap() const {
+    return map;
+}
+
+void Character::checkWallCollisions(const QVector<Wall>& walls) {
+    if (!isAlive()) {
+        return;
+    }
+
+    if (walls.isEmpty()) {
+        return; // 静默处理没有墙的情况
+    }
+    qreal CharacterX = pos().x();
+    if(directionRight) {
+        CharacterX -= edgeTolerance; // 角色右侧位置
+    } else {
+        CharacterX += edgeTolerance; // 角色左侧位置
+    }
+    QPointF characterPos = QPointF(CharacterX, pos().y()+ boundingRect().height());
+    // 利用角色位置而不是矩形检查与每个墙的碰撞
+    for (const Wall& wall : walls) {
+        if (wall.containsPoint(characterPos)) {
+            // 如果角色与墙碰撞，处理碰撞
+            qDebug() << "Character collided with wall at:" << wall.rect << "Character position:" << characterPos;
+            if (directionRight) {
+                setPos(wall.rect.left(), pos().y());
+            } else {
+                setPos(wall.rect.right(), pos().y());
+            }
+            velocity.setX(0); // 停止水平移动
+            return; // 只处理第一个碰撞
+        }
+    }
+}
+void Character::processMovementAndBounds(qreal deltaTime, const QRectF& sceneRect) {
+    if (!isAlive()) {
+        return;
+    }
+    
+    // 应用重力
+    applyGravity(deltaTime);
+    
+    // 检查地面碰撞
+    if (map) {
+        handleGroundCollision(map->getFloorHeightAt(pos().x()));
+    }
+    
+    // 更新位置 (deltaTime 以毫秒为单位，需要转换为秒)
+    qreal deltaTimeInSeconds = deltaTime / 1000.0;
+    setPos(pos() + velocity * deltaTimeInSeconds);
+
+    // 检查墙碰撞
+    if (map) {
+        checkWallCollisions(map->getWalls());
+    }
+    // 确保角色不会离开场景边界
+    QPointF newPos = pos();
+    
+    // 水平边界检查
+    if (newPos.x() < sceneRect.left()) {
+        newPos.setX(sceneRect.left());
+    } else if (newPos.x()> sceneRect.right()) {
+        newPos.setX(sceneRect.right());
+    }
+    
+    setPos(newPos);
+}
+
+void Character::processPlatformstypes() {
+    if (!isAlive()) {
+        return;
+    }
+    
+    // 处理不同种类平台的逻辑
+    if (map) {
+        QPointF characterPos = QPointF(pos().x(), pos().y() + boundingRect().height());
+        const Platform* platform = map->getPlatformAt(characterPos);
+        if (platform) {
+            switch (platform->type) {
+                case Platform::Type::Normal:
+                    // 普通平台逻辑
+                    pixmapItem->setOpacity(1.0); // 恢复不透明度
+                    break;
+                case Platform::Type::Grass:
+                    // 草地平台逻辑
+                    if (isSquatting()){
+                        pixmapItem->setOpacity(0.5); // 半透明
+                        qDebug() << "Character is squatting on grass, setting opacity to 0.5";
+                    }else {
+                        pixmapItem->setOpacity(1.0); // 恢复不透明度
+                    }
+                    break;
+                case Platform::Type::Ice:
+                    // 冰面平台逻辑
+                    // 速度加快
+                    pixmapItem->setOpacity(1.0); // 恢复不透明度
+                    velocity.setX(velocity.x() * PhysicsConstants::ICE_FRICTION);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+#pragma endregion
+
+#pragma region Direction System
+
+void Character::setDirection(bool right) {
+    if (directionRight != right) {
+        // 只有在方向真正改变时才调整位置
+        if (right) {
+            setPos(pos().x() + boundingRect().width(), pos().y());
+        } else {
+            setPos(pos().x() - boundingRect().width(), pos().y());
+        }
+        directionRight = right;
+    }
+    
+    // 设置变换
+    if (directionRight) {
+        setTransform(QTransform().scale(-1, 1));
+    } else {
+        setTransform(QTransform().scale(1, 1));
+    }
+}
+
+bool Character::isDirectionRight() const {
+    return directionRight;
+}
+
+#pragma endregion
+
+#pragma region Pixmap System
+
+void Character::updatePixmapItem(const QString& condition) {
+    if(characterPixmapPaths.contains(condition)) {
+        QString pixmapPath = characterPixmapPaths.value(condition);
+        if (!pixmapPath.isEmpty()) {
+            QPixmap pixmap(pixmapPath);
+            if (!pixmap.isNull()) {
+                if (pixmapItem) {
+                    pixmapItem->setPixmap(pixmap);
+                } else {
+                    pixmapItem = new QGraphicsPixmapItem(pixmap, this);
+                }
+            } else {
+                qDebug() << "Failed to load pixmap from path:" << pixmapPath;
+            }
+        } else {
+            qDebug() << "No pixmap path found for condition:" << condition;
+        }
+    } else {
+        qDebug() << "Condition not found in characterPixmapPaths:" << condition;
+    }
+}
+
+#pragma endregion
