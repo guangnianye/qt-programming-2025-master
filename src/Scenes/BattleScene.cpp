@@ -40,8 +40,7 @@ BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     spareArmor->unmount();
     spareArmor->setPos(sceneRect().left() + (sceneRect().right() - sceneRect().left()) * 0.75, map->getFloorHeightAt(sceneRect().left() + (sceneRect().right() - sceneRect().left()) * 0.75));
     
-    // 初始化血量显示UI
-    setupHealthDisplay();
+    // 血量条现在由角色自己管理，不需要在场景中设置
 }
 
 void BattleScene::processInput() {
@@ -56,6 +55,7 @@ void BattleScene::processInput() {
 
 void BattleScene::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
+        // 玩家角色控制 (WASD + JK)
         case Qt::Key_A:
             if (character != nullptr) {
                 character->setLeftDown(true);
@@ -86,6 +86,38 @@ void BattleScene::keyPressEvent(QKeyEvent *event) {
                 character->setAttacking(true);
             }
             break;
+            
+        // 敌人角色控制 (方向键 + NM)
+        case Qt::Key_Left:
+            if (enemy != nullptr) {
+                enemy->setLeftDown(true);
+            }
+            break;
+        case Qt::Key_Right:
+            if (enemy != nullptr) {
+                enemy->setRightDown(true);
+            }
+            break;
+        case Qt::Key_Up: // 跳跃键
+            if (enemy != nullptr) {
+                enemy->setUpDown(true);
+            }
+            break;
+        case Qt::Key_Down: // 蹲下键
+            if (enemy != nullptr) {
+                enemy->setSquatting(true);
+            }
+            break;
+        case Qt::Key_N:
+            if (enemy != nullptr) {
+                enemy->setPickDown(true);
+            }
+            break;
+        case Qt::Key_M: // 攻击键
+            if (enemy != nullptr) {
+                enemy->setAttacking(true);
+            }
+            break;
         default:
             Scene::keyPressEvent(event);
     }
@@ -93,6 +125,7 @@ void BattleScene::keyPressEvent(QKeyEvent *event) {
 
 void BattleScene::keyReleaseEvent(QKeyEvent *event) {
     switch (event->key()) {
+        // 玩家角色控制 (WASD + JK)
         case Qt::Key_A:
             if (character != nullptr) {
                 character->setLeftDown(false);
@@ -123,6 +156,38 @@ void BattleScene::keyReleaseEvent(QKeyEvent *event) {
                 character->setAttacking(false);
             }
             break;
+            
+        // 敌人角色控制 (方向键 + NM)
+        case Qt::Key_Left:
+            if (enemy != nullptr) {
+                enemy->setLeftDown(false);
+            }
+            break;
+        case Qt::Key_Right:
+            if (enemy != nullptr) {
+                enemy->setRightDown(false);
+            }
+            break;
+        case Qt::Key_Up:
+            if (enemy != nullptr) {
+                enemy->setUpDown(false);
+            }
+            break;
+        case Qt::Key_Down:
+            if (enemy != nullptr) {
+                enemy->setSquatting(false);
+            }
+            break;
+        case Qt::Key_N:
+            if (enemy != nullptr) {
+                enemy->setPickDown(false);
+            }
+            break;
+        case Qt::Key_M: // 攻击键
+            if (enemy != nullptr) {
+                enemy->setAttacking(false);
+            }
+            break;
         default:
             Scene::keyReleaseEvent(event);
     }
@@ -132,7 +197,7 @@ void BattleScene::update() {
     Scene::update();
     processPhysics(); // 处理重力物理
     processAttacks(); // 处理攻击逻辑
-    updateHealthDisplay(); // 更新血量显示
+    // 血量显示现在由角色自己管理，不需要在场景中更新
 }
 
 void BattleScene::processPhysics() {
@@ -219,95 +284,40 @@ Mountable *BattleScene::pickupMountable(Character *character, Mountable *mountab
 }
 
 void BattleScene::processAttacks() {
-    if (character && character->isCurrentlyAttacking()) {
-        // 获取攻击范围
-        QRectF attackRange = character->getAttackRange();
-        
-        // 检查攻击范围内的物品
-        for (QGraphicsItem *item : items()) {
-            // 检查是否与攻击范围相交
-            if (item != character && item->boundingRect().translated(item->pos()).intersects(attackRange)) {
-                // 检查是否攻击到其他角色
-                if (auto targetCharacter = dynamic_cast<Character *>(item)) {
-                    if (targetCharacter->isAlive()) {
-                        targetCharacter->takeDamage(PhysicsConstants::ATTACK_DAMAGE);
-                        qDebug() << "Attacked character! Target health:" << targetCharacter->getCurrentHealth();
+    // 处理玩家角色的攻击
+    processCharacterAttack(character, "Player");
+    
+    // 处理敌人的攻击
+    processCharacterAttack(enemy, "Enemy");
+}
+
+void BattleScene::processCharacterAttack(Character* attacker, const QString& attackerName) {
+    if (!attacker || !attacker->isCurrentlyAttacking()) {
+        return;
+    }
+    
+    // 获取攻击范围
+    QRectF attackRange = attacker->getAttackRange();
+    
+    // 检查攻击范围内的物品
+    for (QGraphicsItem *item : items()) {
+        // 检查是否与攻击范围相交
+        if (item != attacker && item->boundingRect().translated(item->pos()).intersects(attackRange)) {
+            // 检查是否攻击到其他角色
+            if (auto targetCharacter = dynamic_cast<Character *>(item)) {
+                if (targetCharacter->isAlive()) {
+                    // 使用攻击者当前武器的伤害值
+                    qreal weaponDamage = 0;
+                    if (attacker->getWeapon()) {
+                        weaponDamage = attacker->getWeapon()->getDamage();
                     }
+                    
+                    targetCharacter->takeDamage(weaponDamage);
+                    qDebug() << attackerName << "attacked character with" << attacker->getWeapon()->getWeaponType() 
+                            << "! Damage:" << weaponDamage 
+                            << "Target health:" << targetCharacter->getCurrentHealth();
                 }
             }
-        }
-    }
-}
-
-void BattleScene::setupHealthDisplay() {
-    // 血量条的位置和大小
-    qreal barWidth = 200;
-    qreal barHeight = 20;
-    qreal barX = 20; // 距离屏幕左边的距离
-    qreal barY = 20; // 距离屏幕顶部的距离
-    
-    // 创建血量条背景（灰色）
-    healthBarBackground = new QGraphicsRectItem(barX, barY, barWidth, barHeight);
-    healthBarBackground->setBrush(QBrush(QColor(100, 100, 100))); // 深灰色背景
-    healthBarBackground->setPen(QPen(QColor(0, 0, 0), 2)); // 黑色边框
-    healthBarBackground->setZValue(1000); // 确保在最上层显示
-    addItem(healthBarBackground);
-    
-    // 创建血量条前景（红色）
-    healthBarForeground = new QGraphicsRectItem(barX, barY, barWidth, barHeight);
-    healthBarForeground->setBrush(QBrush(QColor(255, 0, 0))); // 红色前景
-    healthBarForeground->setPen(QPen(Qt::NoPen)); // 无边框
-    healthBarForeground->setZValue(1001); // 在背景之上
-    addItem(healthBarForeground);
-    
-    // 创建血量数值文本
-    healthText = new QGraphicsTextItem();
-    healthText->setPos(barX + barWidth + 10, barY - 5); // 位于血量条右侧
-    healthText->setDefaultTextColor(QColor(255, 255, 255)); // 白色文字
-    healthText->setFont(QFont("Arial", 12, QFont::Bold)); // 粗体字体
-    healthText->setZValue(1002); // 在最上层
-    addItem(healthText);
-    
-    // 初始更新血量显示
-    updateHealthDisplay();
-}
-
-void BattleScene::updateHealthDisplay() {
-    if (character && healthBarBackground && healthBarForeground && healthText) {
-        qreal currentHealth = character->getCurrentHealth();
-        qreal maxHealth = character->getMaxHealth();
-        qreal healthPercentage = (maxHealth > 0) ? (currentHealth / maxHealth) : 0;
-        
-        // 更新血量条宽度
-        qreal barWidth = 200;
-        qreal currentWidth = barWidth * healthPercentage;
-        
-        // 更新前景血量条的宽度
-        QRectF rect = healthBarForeground->rect();
-        rect.setWidth(currentWidth);
-        healthBarForeground->setRect(rect);
-        
-        // 根据血量百分比改变颜色
-        QColor barColor;
-        if (healthPercentage > 0.6) {
-            barColor = QColor(0, 255, 0); // 绿色 (健康)
-        } else if (healthPercentage > 0.3) {
-            barColor = QColor(255, 255, 0); // 黄色 (警告)
-        } else {
-            barColor = QColor(255, 0, 0); // 红色 (危险)
-        }
-        healthBarForeground->setBrush(QBrush(barColor));
-        
-        // 更新血量数值文本
-        QString healthString = QString("%1/%2").arg(static_cast<int>(currentHealth)).arg(static_cast<int>(maxHealth));
-        healthText->setPlainText(healthString);
-        
-        // 如果角色死亡，显示特殊文本
-        if (!character->isAlive()) {
-            healthText->setPlainText("DEAD");
-            healthText->setDefaultTextColor(QColor(255, 0, 0)); // 红色死亡文字
-        } else {
-            healthText->setDefaultTextColor(QColor(255, 255, 255)); // 白色正常文字
         }
     }
 }

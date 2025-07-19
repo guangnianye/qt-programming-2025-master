@@ -16,7 +16,12 @@ Character::Character(QGraphicsItem *parent):Item(parent,"") {
     // 初始化血量系统
     maxHealth = PhysicsConstants::DEFAULT_MAX_HEALTH;
     currentHealth = maxHealth;
-
+    
+    // 初始化默认武器（拳头）
+    weapon = new Fist(this);
+    
+    // 初始化血量条UI
+    setupHealthBar();
 }
 
 
@@ -79,11 +84,14 @@ void Character::processAttack() {
     // 瞬间攻击逻辑：isPerformingAttack只用作标记，立即处理后立即重置
     if (isPerformingAttack) {
         // 攻击逻辑在这一帧内立即完成
-        qDebug() << "Attack logic executed immediately";
+        
+        // 统一使用武器系统进行攻击
+        if (weapon) {
+            weapon->attack();
+        } 
         isPerformingAttack = false; // 立即重置
         attackTimer = 0;
         // 开始后摇显示
-        qDebug() << "Attack logic finished, starting recovery for:" << PhysicsConstants::ATTACK_RECOVERY << "ms";
     }
     
     // 处理攻击输入
@@ -98,11 +106,6 @@ void Character::processAttack() {
             attackRecoveryTimer = PhysicsConstants::ATTACK_RECOVERY;
             // 设置间隔计时器，防止连击过快
             attackIntervalTimer = PhysicsConstants::ATTACK_INTERVAL;
-            qDebug() << "Attack triggered! Recovery duration:" << PhysicsConstants::ATTACK_RECOVERY << "ms, Interval:" << PhysicsConstants::ATTACK_INTERVAL << "ms";
-        }
-        // 如果在冷却期间，显示提示（但不要每帧都输出）
-        else if ((attackRecoveryTimer > 0 || attackIntervalTimer > 0) && !lastAttackDown) {
-            qDebug() << "Attack blocked! Recovery remaining:" << attackRecoveryTimer << "ms, Interval remaining:" << attackIntervalTimer << "ms";
         }
     }
     
@@ -114,13 +117,13 @@ bool Character::isCurrentlyAttacking() const {
 }
 
 QRectF Character::getAttackRange() const {
-    // 根据角色朝向计算攻击范围
+    // 根据角色朝向和武器攻击范围计算攻击范围
     QRectF characterRect = boundingRect();
-    qreal range = PhysicsConstants::ATTACK_RANGE;
+    qreal range = weapon ? weapon->getAttackRange() : PhysicsConstants::ATTACK_RANGE;
     
     if (directionRight) {
         // 向右攻击
-        return QRectF(pos().x() + characterRect.width(), 
+        return QRectF(pos().x(), 
                       pos().y(), 
                       range, 
                       characterRect.height());
@@ -333,6 +336,9 @@ void Character::takeDamage(qreal damage) {
         }
         qDebug() << "Character took" << damage << "damage. Health:" << currentHealth << "/" << maxHealth;
         
+        // 更新血量条显示
+        updateHealthBar();
+        
         // 如果血量归零，角色死亡
         if (!isAlive()) {
             qDebug() << "Character died!";
@@ -348,6 +354,9 @@ void Character::heal(qreal amount) {
             currentHealth = maxHealth;
         }
         qDebug() << "Character healed" << amount << "points. Health:" << currentHealth << "/" << maxHealth;
+        
+        // 更新血量条显示
+        updateHealthBar();
     }
 }
 
@@ -523,6 +532,161 @@ void Character::updatePixmapItem(const QString& condition) {
         }
     } else {
         qDebug() << "Condition not found in characterPixmapPaths:" << condition;
+    }
+}
+
+#pragma endregion
+
+#pragma region Weapon System
+
+Weapon* Character::equipWeapon(Weapon* newWeapon) {
+    Weapon* oldWeapon = weapon;
+    
+    // 如果新武器为空，装备默认拳头
+    if (newWeapon == nullptr) {
+        weapon = new Fist(this);
+    } else {
+        weapon = newWeapon;
+        weapon->setParentItem(this);
+        // 可以在这里设置武器的相对位置
+        weapon->setPos(0, 0);  // 武器相对于角色的位置
+    }
+    
+    // 如果旧武器不是拳头，返回它；如果是拳头，删除它
+    if (oldWeapon && oldWeapon->getWeaponType() != "fist") {
+        oldWeapon->setParentItem(nullptr);
+        return oldWeapon;
+    } else if (oldWeapon) {
+        delete oldWeapon;  // 删除旧的拳头
+        return nullptr;
+    }
+    
+    return nullptr;
+}
+
+Weapon* Character::unequipWeapon() {
+    Weapon* oldWeapon = weapon;
+    
+    // 卸下武器后，自动装备拳头
+    weapon = new Fist(this);
+    
+    // 如果卸下的武器不是拳头，返回它；如果是拳头，删除它
+    if (oldWeapon && oldWeapon->getWeaponType() != "fist") {
+        oldWeapon->setParentItem(nullptr);
+        return oldWeapon;
+    } else if (oldWeapon) {
+        delete oldWeapon;  // 删除旧的拳头
+        return nullptr;
+    }
+    
+    return nullptr;
+}
+
+void Character::attackWithWeapon() {
+    if (!isPerformingAttack) {
+        // 使用当前装备的武器进行攻击（武器总是存在的）
+        if (weapon) {
+            weapon->attack();
+            isPerformingAttack = true;
+            attackTimer = PhysicsConstants::ATTACK_DURATION;
+        }
+    }
+}
+
+#pragma endregion
+
+#pragma region Health Bar UI
+
+void Character::setupHealthBar() {
+    // 血量条的大小和相对位置
+    qreal barWidth = 60;
+    qreal barHeight = 8;
+    qreal barX = -barWidth / 2;  // 相对于角色中心
+    
+    // 动态计算血量条位置，确保在角色上方
+    QRectF characterBounds = boundingRect();
+    qreal barY = characterBounds.top() - 20;  // 在角色顶部上方20像素
+    
+    // 创建血量条背景（深灰色）
+    healthBarBackground = new QGraphicsRectItem(barX, barY, barWidth, barHeight, this);
+    healthBarBackground->setBrush(QBrush(QColor(60, 60, 60))); // 深灰色背景
+    healthBarBackground->setPen(QPen(QColor(0, 0, 0), 1)); // 黑色边框
+    healthBarBackground->setZValue(100); // 确保在角色之上显示
+    
+    // 创建血量条前景（绿色）
+    healthBarForeground = new QGraphicsRectItem(barX, barY, barWidth, barHeight, this);
+    healthBarForeground->setBrush(QBrush(QColor(0, 255, 0))); // 绿色前景
+    healthBarForeground->setPen(QPen(Qt::NoPen)); // 无边框
+    healthBarForeground->setZValue(101); // 在背景之上
+    
+    // 创建血量数值文本（可选，设置为较小字体）
+    healthText = new QGraphicsTextItem(this);
+    healthText->setPos(barX, barY - 12); // 位于血量条上方
+    healthText->setDefaultTextColor(QColor(255, 255, 255)); // 白色文字
+    healthText->setFont(QFont("Arial", 7)); // 小字体
+    healthText->setZValue(102); // 在最上层
+    
+    // 初始更新血量显示
+    updateHealthBar();
+}
+
+void Character::updateHealthBar() {
+    if (!healthBarBackground || !healthBarForeground || !healthText) {
+        return;
+    }
+    
+    // 如果血量条被隐藏，不更新
+    if (!healthBarVisible) {
+        return;
+    }
+    
+    qreal healthPercentage = (maxHealth > 0) ? (currentHealth / maxHealth) : 0;
+    
+    // 更新血量条宽度
+    qreal barWidth = 60;
+    qreal currentWidth = barWidth * healthPercentage;
+    
+    // 更新前景血量条的宽度
+    QRectF rect = healthBarForeground->rect();
+    rect.setWidth(currentWidth);
+    healthBarForeground->setRect(rect);
+    
+    // 根据血量百分比改变颜色
+    QColor barColor;
+    if (healthPercentage > 0.6) {
+        barColor = QColor(0, 255, 0); // 绿色 (健康)
+    } else if (healthPercentage > 0.3) {
+        barColor = QColor(255, 255, 0); // 黄色 (警告)
+    } else {
+        barColor = QColor(255, 0, 0); // 红色 (危险)
+    }
+    healthBarForeground->setBrush(QBrush(barColor));
+    
+    // 更新血量数值文本
+    QString healthString = QString("%1/%2").arg(static_cast<int>(currentHealth)).arg(static_cast<int>(maxHealth));
+    healthText->setPlainText(healthString);
+    
+    // 如果角色死亡，显示特殊效果
+    if (!isAlive()) {
+        healthText->setPlainText("DEAD");
+        healthText->setDefaultTextColor(QColor(255, 0, 0)); // 红色死亡文字
+        // 可以添加死亡时的血量条特效
+    } else {
+        healthText->setDefaultTextColor(QColor(0,255,0)); // 绿色正常文字
+    }
+}
+
+void Character::setHealthBarVisible(bool visible) {
+    healthBarVisible = visible;
+    
+    if (healthBarBackground) {
+        healthBarBackground->setVisible(visible);
+    }
+    if (healthBarForeground) {
+        healthBarForeground->setVisible(visible);
+    }
+    if (healthText) {
+        healthText->setVisible(visible);
     }
 }
 

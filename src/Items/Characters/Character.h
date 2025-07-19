@@ -6,9 +6,13 @@
 #define QT_PROGRAMMING_2024_CHARACTER_H
 
 #include <QGraphicsEllipseItem>
+#include <QGraphicsRectItem>
+#include <QGraphicsTextItem>
 #include "../HeadEquipments/HeadEquipment.h"
 #include "../Armors/Armor.h"
 #include "../LegEquipments/LegEquipment.h"
+#include "../Weapons/Weapon.h"
+#include "../Weapons/Fist.h"
 #include "../../Physics/PhysicsConstants.h"
 #include "../Maps/Map.h"
 
@@ -49,6 +53,25 @@ public:
         return armor;
     }
 
+    // 武器装备相关方法
+    [[nodiscard]] Weapon *getWeapon() const {
+        return weapon;
+    }
+
+    // 装备武器
+    Weapon* equipWeapon(Weapon* newWeapon);
+
+    // 卸下武器
+    Weapon* unequipWeapon();
+
+    // 检查是否装备了非拳头武器
+    [[nodiscard]] bool hasWeapon() const {
+        return weapon != nullptr && weapon->getWeaponType() != "fist";
+    }
+
+    // 使用当前装备的武器进行攻击
+    void attackWithWeapon();
+
     [[nodiscard]] bool isPickDown() const;
 
     void setPickDown(bool pickDown);
@@ -76,8 +99,18 @@ public:
     
     [[nodiscard]] qreal getHealthPercentage() const;
 
+    // 血量条UI相关方法
+    void setupHealthBar();
+    void updateHealthBar();
+    void setHealthBarVisible(bool visible);
+
     [[nodiscard]] bool isMounted() const {
         return headEquipment != nullptr || legEquipment != nullptr || armor != nullptr;
+    }
+
+    // 检查是否装备了任何物品（包括武器）
+    [[nodiscard]] bool isEquipped() const {
+        return headEquipment != nullptr || legEquipment != nullptr || armor != nullptr || weapon != nullptr;
     }
 
     [[nodiscard]] const QPointF &getVelocity() const;
@@ -126,6 +159,7 @@ protected:
     HeadEquipment *headEquipment{};
     LegEquipment *legEquipment{};
     Armor *armor{};
+    Weapon *weapon{};  // 当前装备的武器
     QPointF velocity{};
 //    QGraphicsEllipseItem *ellipseItem; // for debugging
 
@@ -151,6 +185,12 @@ private:
     // 血量系统相关属性
     qreal currentHealth{100.0};  // 当前血量
     qreal maxHealth{100.0};      // 最大血量
+    
+    // 血量条UI相关属性
+    QGraphicsRectItem *healthBarBackground{nullptr};  // 血量条背景
+    QGraphicsRectItem *healthBarForeground{nullptr};  // 血量条前景
+    QGraphicsTextItem *healthText{nullptr};           // 血量数值文本
+    bool healthBarVisible{true};                       // 血量条是否可见
     
     // 地图引用
     Map* map{nullptr};           // 当前地图的引用
