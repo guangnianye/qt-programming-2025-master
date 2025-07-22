@@ -8,12 +8,15 @@
 #include "../Items/Maps/Battlefield.h"
 #include "../Items/Armors/FlamebreakerArmor.h"
 #include "../Physics/PhysicsConstants.h"
+#include "../Items/Weapons/ThrowingStone.h"
 
 BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     // This is useful if you want the scene to have the exact same dimensions as the view
     setSceneRect(0, 0, 960, 640);
     map = new Battlefield();
     character = new Link();
+    Weapon* newWeapon = new ThrowingStone(character);
+    character->equipWeapon(newWeapon);
     enemy = new Link(); // 这里可以替换为其他敌人角色
     spareArmor = new FlamebreakerArmor();
     addItem(map);
@@ -39,8 +42,7 @@ BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     
     spareArmor->unmount();
     spareArmor->setPos(sceneRect().left() + (sceneRect().right() - sceneRect().left()) * 0.75, map->getFloorHeightAt(sceneRect().left() + (sceneRect().right() - sceneRect().left()) * 0.75));
-    
-    // 血量条现在由角色自己管理，不需要在场景中设置
+
 }
 
 void BattleScene::processInput() {
@@ -300,6 +302,22 @@ void BattleScene::processCharacterAttack(Character* attacker, const QString& att
         return;
     }
     
+    Weapon* weapon = attacker->getWeapon();
+    if (!weapon) {
+        return;
+    }
+    
+    // 根据武器类型采用不同的攻击处理策略
+    if (weapon->type == WeaponType::Melee) {
+        // 近战武器：使用范围检测
+        processMeleeAttack(attacker, attackerName);
+    } else if (weapon->type == WeaponType::Ranged) {
+        // 远程武器：投射物由武器系统自己处理
+        processRangedAttack(attacker, attackerName);
+    }
+}
+
+void BattleScene::processMeleeAttack(Character* attacker, const QString& attackerName) {
     // 获取攻击范围
     QRectF attackRange = attacker->getAttackRange();
     
@@ -311,17 +329,30 @@ void BattleScene::processCharacterAttack(Character* attacker, const QString& att
             if (auto targetCharacter = dynamic_cast<Character *>(item)) {
                 if (targetCharacter->isAlive()) {
                     // 使用攻击者当前武器的伤害值
-                    qreal weaponDamage = 0;
-                    if (attacker->getWeapon()) {
-                        weaponDamage = attacker->getWeapon()->getDamage();
-                    }
+                    qreal weaponDamage = attacker->getWeapon()->getDamage();
                     
                     targetCharacter->takeDamage(weaponDamage);
-                    qDebug() << attackerName << "attacked character with" << attacker->getWeapon()->getWeaponType() 
+                    qDebug() << attackerName << "melee attacked character with" << attacker->getWeapon()->getWeaponname() 
                             << "! Damage:" << weaponDamage 
                             << "Target health:" << targetCharacter->getCurrentHealth();
                 }
             }
         }
     }
+}
+
+void BattleScene::processRangedAttack(Character* attacker, const QString& attackerName) {
+    // 对于远程武器，主要逻辑由武器系统的投射物处理
+    // 这里主要负责记录攻击信息和可能的额外逻辑
+    
+    qDebug() << attackerName << "performed ranged attack with" << attacker->getWeapon()->getWeaponname();
+    
+    // 注意：远程武器的实际伤害计算由投射物的碰撞检测处理
+    // 这里可以添加一些额外的逻辑，比如：
+    // 1. 攻击特效
+    // 2. 音效
+    // 3. 攻击统计
+    // 4. 特殊状态效果等
+    
+    // 如果需要在场景中跟踪投射物或添加特殊逻辑，可以在这里实现
 }

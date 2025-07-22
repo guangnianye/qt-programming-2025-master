@@ -30,6 +30,10 @@ public:
 
     void processCharacterAttack(Character* attacker, const QString& attackerName); // 处理单个角色的攻击逻辑
 
+    void processMeleeAttack(Character* attacker, const QString& attackerName); // 处理近战攻击逻辑
+
+    void processRangedAttack(Character* attacker, const QString& attackerName); // 处理远程攻击逻辑
+
 protected slots:
 
     void update() override;

@@ -8,6 +8,7 @@
         <file>Items/Characters/green/character_green_front.png</file>
         <file>Items/Characters/green/character_green_duck.png</file>
         <file>Items/Characters/green/character_green_jump.png</file>
+        <file>Items/Weapons/ThrowingStone/ThrowingStone_Icon.png</file>
         <file>Backgrounds/ChooseBattlefieldSceneBackground.png</file>
     </qresource>
 </RCC>

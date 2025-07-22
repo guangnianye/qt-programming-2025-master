@@ -5,9 +5,9 @@
 #ifndef QT_PROGRAMMING_2024_FIST_H
 #define QT_PROGRAMMING_2024_FIST_H
 
-#include "Weapon.h"
+#include "MeleeWeapon.h"
 
-class Fist : public Weapon {
+class Fist : public MeleeWeapon {
 public:
     explicit Fist(QGraphicsItem *parent);
 

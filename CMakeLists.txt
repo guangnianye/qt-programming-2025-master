@@ -53,6 +53,16 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Weapons/Weapon.h
         src/Items/Weapons/Fist.cpp
         src/Items/Weapons/Fist.h
+        src/Items/Weapons/MeleeWeapon.cpp
+        src/Items/Weapons/MeleeWeapon.h
+        src/Items/Weapons/RangedWeapon.cpp
+        src/Items/Weapons/RangedWeapon.h
+        src/Items/Weapons/Sword.cpp
+        src/Items/Weapons/Sword.h
+        src/Items/Weapons/Projectile.cpp
+        src/Items/Weapons/Projectile.h
+        src/Items/Weapons/ThrowingStone.cpp
+        src/Items/Weapons/ThrowingStone.h
         src/Physics/PhysicsConstants.h)
 target_link_libraries(qt_programming_2024
         Qt::Core

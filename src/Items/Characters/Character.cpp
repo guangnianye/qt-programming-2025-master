@@ -119,8 +119,7 @@ bool Character::isCurrentlyAttacking() const {
 QRectF Character::getAttackRange() const {
     // 根据角色朝向和武器攻击范围计算攻击范围
     QRectF characterRect = boundingRect();
-    qreal range = weapon ? weapon->getAttackRange() : PhysicsConstants::ATTACK_RANGE;
-    
+    qreal range = weapon ? weapon->getAttackRange() : PhysicsConstants::ATTACK_RANGE; // 使用武器的攻击范围
     if (directionRight) {
         // 向右攻击
         return QRectF(pos().x(), 
@@ -553,7 +552,7 @@ Weapon* Character::equipWeapon(Weapon* newWeapon) {
     }
     
     // 如果旧武器不是拳头，返回它；如果是拳头，删除它
-    if (oldWeapon && oldWeapon->getWeaponType() != "fist") {
+    if (oldWeapon && oldWeapon->getWeaponname() != "fist") {
         oldWeapon->setParentItem(nullptr);
         return oldWeapon;
     } else if (oldWeapon) {
@@ -571,7 +570,7 @@ Weapon* Character::unequipWeapon() {
     weapon = new Fist(this);
     
     // 如果卸下的武器不是拳头，返回它；如果是拳头，删除它
-    if (oldWeapon && oldWeapon->getWeaponType() != "fist") {
+    if (oldWeapon && oldWeapon->getWeaponname() != "fist") {
         oldWeapon->setParentItem(nullptr);
         return oldWeapon;
     } else if (oldWeapon) {
@@ -580,17 +579,6 @@ Weapon* Character::unequipWeapon() {
     }
     
     return nullptr;
-}
-
-void Character::attackWithWeapon() {
-    if (!isPerformingAttack) {
-        // 使用当前装备的武器进行攻击（武器总是存在的）
-        if (weapon) {
-            weapon->attack();
-            isPerformingAttack = true;
-            attackTimer = PhysicsConstants::ATTACK_DURATION;
-        }
-    }
 }
 
 #pragma endregion

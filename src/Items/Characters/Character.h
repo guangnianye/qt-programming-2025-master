@@ -64,14 +64,6 @@ public:
     // 卸下武器
     Weapon* unequipWeapon();
 
-    // 检查是否装备了非拳头武器
-    [[nodiscard]] bool hasWeapon() const {
-        return weapon != nullptr && weapon->getWeaponType() != "fist";
-    }
-
-    // 使用当前装备的武器进行攻击
-    void attackWithWeapon();
-
     [[nodiscard]] bool isPickDown() const;
 
     void setPickDown(bool pickDown);

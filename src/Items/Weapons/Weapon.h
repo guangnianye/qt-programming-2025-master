@@ -7,6 +7,10 @@
 
 #include "../Item.h"
 
+enum class WeaponType {
+    Melee,
+    Ranged
+};
 
 class Weapon : public Item {
 public:
@@ -26,7 +30,7 @@ public:
     }
 
     // 设置武器的攻击范围
-    void setAttackRange(qreal range) {
+    void setAttackRange(qreal range) {  
         this->attackRange = range;
     }
 
@@ -35,20 +39,22 @@ public:
         return attackRange;
     }
 
-    // 设置武器类型（用于区分不同武器）
-    void setWeaponType(const QString& type) {
-        this->weaponType = type;
+    // 设置武器名称
+    void setWeaponname(const QString& type) {
+        this->weaponname = type;
     }
-
-    // 获取武器类型
-    [[nodiscard]] QString getWeaponType() const {
-        return weaponType;
+    // 获取武器类型名称
+    [[nodiscard]] QString getWeaponname() const {
+        return weaponname;
     }
 
 private:
     qreal damage{10.0};        // 默认伤害值
-    qreal attackRange{50.0};   // 攻击范围
-    QString weaponType{"Unknown"}; // 武器类型
+    QString weaponname{"Unknown"}; // 武器类型
+    qreal attackRange{50.0};   // 攻击范围，默认值为50.0
+
+public:
+    WeaponType type{WeaponType::Melee}; // 武器类型枚举
 };
 
 #endif //QT_PROGRAMMING_2024_WEAPON_H
