@@ -10,14 +10,14 @@
 #include "../Physics/PhysicsConstants.h"
 #include "../Items/Weapons/ThrowingStone.h"
 #include "../Items/Weapons/Sword.h"
+#include "../Items/Weapons/Raygun.h"
+#include "../Items/Weapons/RaygunBig.h"
 
 BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     // This is useful if you want the scene to have the exact same dimensions as the view
     setSceneRect(0, 0, 960, 640);
     map = new Battlefield();
     character = new Link();
-    Weapon* newWeapon = new Sword(character);
-    character->equipWeapon(newWeapon);
     enemy = new Link(); // 这里可以替换为其他敌人角色
     spareArmor = new FlamebreakerArmor();
     addItem(map);

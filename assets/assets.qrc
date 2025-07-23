@@ -11,6 +11,8 @@
         <file>Items/Weapons/ThrowingStone/ThrowingStone_Icon.png</file>
         <file>Items/Weapons/Sword/Sword.png</file>
         <file>Items/Weapons/Raygun/raygun.png</file>
+        <file>Items/Weapons/Raygun/raygunBig.png</file>
+        <file>Items/Weapons/Raygun/bullet.png</file>
         <file>Backgrounds/ChooseBattlefieldSceneBackground.png</file>
     </qresource>
 </RCC>
