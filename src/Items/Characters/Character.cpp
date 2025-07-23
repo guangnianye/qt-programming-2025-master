@@ -217,19 +217,6 @@ bool Character::isPicking() const {
     return picking;
 }
 
-Armor *Character::pickupArmor(Armor *newArmor) {
-    auto oldArmor = armor;
-    if (oldArmor != nullptr) {
-        oldArmor->unmount();
-        oldArmor->setPos(newArmor->pos());
-        oldArmor->setParentItem(parentItem());
-    }
-    newArmor->setParentItem(this);
-    newArmor->mountToParent();
-    armor = newArmor;
-    return oldArmor;
-}
-
 #pragma region Gravity System
 // 重力系统方法实现
 bool Character::isOnGround() const {
@@ -549,6 +536,10 @@ Weapon* Character::equipWeapon(Weapon* newWeapon) {
         weapon->setParentItem(this);
         // 可以在这里设置武器的相对位置
         weapon->setPos(0, 0);  // 武器相对于角色的位置
+        
+        // 确保武器可见并设置合适的显示层级
+        weapon->setVisible(true);
+        weapon->setZValue(1);  // 设置Z值，确保武器显示在角色前面
     }
     
     // 如果旧武器不是拳头，返回它；如果是拳头，删除它

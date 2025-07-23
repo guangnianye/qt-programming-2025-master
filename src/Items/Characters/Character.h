@@ -8,9 +8,6 @@
 #include <QGraphicsEllipseItem>
 #include <QGraphicsRectItem>
 #include <QGraphicsTextItem>
-#include "../HeadEquipments/HeadEquipment.h"
-#include "../Armors/Armor.h"
-#include "../LegEquipments/LegEquipment.h"
 #include "../Weapons/Weapon.h"
 #include "../Weapons/Fist.h"
 #include "../../Physics/PhysicsConstants.h"
@@ -39,19 +36,7 @@ public:
 
     [[nodiscard]] bool isSquatting() const;
 
-    void setSquatting(bool squatting);;
-
-    [[nodiscard]] HeadEquipment *getHeadEquipment() const {
-        return headEquipment;
-    }
-
-    [[nodiscard]] LegEquipment *getLegEquipment() const {
-        return legEquipment;
-    }
-
-    [[nodiscard]] Armor *getArmor() const {
-        return armor;
-    }
+    void setSquatting(bool squatting);
 
     // 武器装备相关方法
     [[nodiscard]] Weapon *getWeapon() const {
@@ -96,13 +81,10 @@ public:
     void updateHealthBar();
     void setHealthBarVisible(bool visible);
 
-    [[nodiscard]] bool isMounted() const {
-        return headEquipment != nullptr || legEquipment != nullptr || armor != nullptr;
-    }
 
-    // 检查是否装备了任何物品（包括武器）
+    // 检查是否装备了武器
     [[nodiscard]] bool isEquipped() const {
-        return headEquipment != nullptr || legEquipment != nullptr || armor != nullptr || weapon != nullptr;
+        return weapon != nullptr;
     }
 
     [[nodiscard]] const QPointF &getVelocity() const;
@@ -112,8 +94,6 @@ public:
     void setVelocity(const QPointF &velocity);
 
     void processInput();
-
-    Armor* pickupArmor(Armor* newArmor);
 
     // 重力系统相关方法
     [[nodiscard]] bool isOnGround() const;
@@ -148,9 +128,6 @@ public:
     void processPlatformstypes();
   
 protected:
-    HeadEquipment *headEquipment{};
-    LegEquipment *legEquipment{};
-    Armor *armor{};
     Weapon *weapon{};  // 当前装备的武器
     QPointF velocity{};
 //    QGraphicsEllipseItem *ellipseItem; // for debugging

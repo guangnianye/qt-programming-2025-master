@@ -4,26 +4,23 @@
 
 #include <QDebug>
 #include "BattleScene.h"
-#include "../Items/Characters/Link.h"
+#include "../Items/Characters/Green.h"
 #include "../Items/Maps/Battlefield.h"
-#include "../Items/Armors/FlamebreakerArmor.h"
 #include "../Physics/PhysicsConstants.h"
-#include "../Items/Weapons/ThrowingStone.h"
-#include "../Items/Weapons/Sword.h"
-#include "../Items/Weapons/Raygun.h"
-#include "../Items/Weapons/RaygunBig.h"
+#include "../Items/Weapons/Fist.h"
+#include "../Items/Weapons/RangedWeapon.h"
+#include "../Items/Mountable.h"
+#include <QLineF>
 
 BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     // This is useful if you want the scene to have the exact same dimensions as the view
     setSceneRect(0, 0, 960, 640);
     map = new Battlefield();
-    character = new Link();
-    enemy = new Link(); // 这里可以替换为其他敌人角色
-    spareArmor = new FlamebreakerArmor();
+    character = new Green();
+    enemy = new Green(); // 这里可以替换为其他敌人角色
     addItem(map);
     addItem(character);
     addItem(enemy);
-    addItem(spareArmor);
     map->scaleToFitScene(this);
     
     // 设置角色的地图引用
@@ -41,9 +38,15 @@ BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     enemy->setPos(enemySpawnPos);
     enemy->handleGroundCollision(map->getFloorHeightAt(enemySpawnPos.x())); // 确保敌人在地面上
     
-    spareArmor->unmount();
-    spareArmor->setPos(sceneRect().left() + (sceneRect().right() - sceneRect().left()) * 0.75, map->getFloorHeightAt(sceneRect().left() + (sceneRect().right() - sceneRect().left()) * 0.75));
-
+    // 初始化角色武器为拳头
+    character->equipWeapon(new Fist(character));
+    enemy->equipWeapon(new Fist(enemy));
+    
+    // 初始化武器管理器
+    weaponManager = new WeaponManager(this, this);
+    weaponManager->setDropArea(QRectF(sceneRect().left(), sceneRect().top() - 100, 
+                                     sceneRect().width(), 50));
+    weaponManager->startWeaponDrops();
 }
 
 void BattleScene::processInput() {
@@ -204,40 +207,53 @@ void BattleScene::update() {
     Scene::update();
     processPhysics(); // 处理重力物理
     processAttacks(); // 处理攻击逻辑
+    processWeaponPickup(); // 处理武器拾取逻辑
     // 血量显示现在由角色自己管理，不需要在场景中更新
 }
 
 void BattleScene::processPhysics() {
     // 为所有可装备物品应用重力
     for (QGraphicsItem *item : items()) {
+        bool shouldApplyPhysics = false;
+        
+        // 检查Mountable物品（如护甲）
         if (auto mountable = dynamic_cast<Mountable *>(item)) {
             if (!mountable->isMounted()) {
-                // 为未装备的物品应用简单的重力,适配新的平台机制而不是原来的地面机制
-                QPointF itemPos = item->pos();
-                qreal floorHeight = map->getFloorHeightAt(itemPos.x());
-                const Platform *platform = map->getNearestPlatform(item->pos());
-                if (platform)
-                {
-                    // 如果物品在平台上，保持其高度
-                    if (platform->containsPoint(itemPos)) {
-                        item->setPos(itemPos.x(), platform->height);
-                    } else {
-                        // 否则应用重力
-                        if (itemPos.y() < floorHeight) {
-                            item->setPos(itemPos.x(), floorHeight);
-                        } else {
-                            item->setPos(itemPos.x(), itemPos.y() + PhysicsConstants::GRAVITY_ACCELERATION);
-                        }
-                    }
+                shouldApplyPhysics = true;
+            }
+        }
+        // 检查武器（武器不继承Mountable，但需要重力）
+        else if (auto weapon = dynamic_cast<Weapon *>(item)) {
+            if (!isWeaponEquipped(weapon)) {
+                shouldApplyPhysics = true;
+            }
+        }
+        
+        if (shouldApplyPhysics) {
+            // 为未装备的物品应用简单的重力,适配新的平台机制而不是原来的地面机制
+            QPointF itemPos = QPointF(item->pos().x(), item->pos().y() - item->boundingRect().height());
+            qreal floorHeight = map->getFloorHeightAt(itemPos.x());
+            const Platform *platform = map->getNearestPlatform(item->pos());
+            if (platform)
+            {
+                // 如果物品在平台上，保持其高度
+                if (platform->containsPoint(itemPos)) {
+                    item->setPos(itemPos.x(), platform->height - item->boundingRect().height());
                 } else {
-                    // 如果没有找到平台，应用重力到地面高度
+                    // 否则应用重力
                     if (itemPos.y() < floorHeight) {
-                        item->setPos(itemPos.x(), floorHeight);
+                        item->setPos(itemPos.x(), floorHeight - item->boundingRect().height());
                     } else {
                         item->setPos(itemPos.x(), itemPos.y() + PhysicsConstants::GRAVITY_ACCELERATION);
                     }
                 }
-                
+            } else {
+                // 如果没有找到平台，应用重力到地面高度
+                if (itemPos.y() < floorHeight) {
+                    item->setPos(itemPos.x(), floorHeight - item->boundingRect().height());
+                } else {
+                    item->setPos(itemPos.x(), itemPos.y() + PhysicsConstants::GRAVITY_ACCELERATION);
+                }
             }
         }
     }
@@ -251,43 +267,6 @@ void BattleScene::processMovement() {
             characteritem->processMovementAndBounds(deltaTime, this->sceneRect());
         }
     }
-}
-
-void BattleScene::processPicking() {
-    Scene::processPicking();
-    if (character->isPicking()) {
-        auto mountable = findNearestUnmountedMountable(character->pos(), PhysicsConstants::PICKUP_DISTANCE);
-        if (mountable != nullptr) {
-            spareArmor = dynamic_cast<Armor *>(pickupMountable(character, mountable));
-        }
-    }
-}
-
-Mountable *BattleScene::findNearestUnmountedMountable(const QPointF &pos, qreal distance_threshold) {
-    Mountable *nearest = nullptr;
-    qreal minDistance = distance_threshold;
-
-    for (QGraphicsItem *item: items()) {
-        if (auto mountable = dynamic_cast<Mountable *>(item)) {
-            if (!mountable->isMounted()) {
-                qreal distance = QLineF(pos, item->pos()).length();
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearest = mountable;
-                }
-            }
-        }
-    }
-
-    return nearest;
-}
-
-Mountable *BattleScene::pickupMountable(Character *character, Mountable *mountable) {
-    // Limitation: currently only supports armor
-    if (auto armor = dynamic_cast<Armor *>(mountable)) {
-        return character->pickupArmor(armor);
-    }
-    return nullptr;
 }
 
 void BattleScene::processAttacks() {
@@ -348,6 +327,9 @@ void BattleScene::processRangedAttack(Character* attacker, const QString& attack
     
     qDebug() << attackerName << "performed ranged attack with" << attacker->getWeapon()->getWeaponname();
     
+    // 检查远程武器是否用完，如果用完则移除
+    WeaponManager::removeDepletedRangedWeapon(attacker);
+    
     // 注意：远程武器的实际伤害计算由投射物的碰撞检测处理
     // 这里可以添加一些额外的逻辑，比如：
     // 1. 攻击特效
@@ -356,4 +338,58 @@ void BattleScene::processRangedAttack(Character* attacker, const QString& attack
     // 4. 特殊状态效果等
     
     // 如果需要在场景中跟踪投射物或添加特殊逻辑，可以在这里实现
+}
+
+void BattleScene::processWeaponPickup() {
+    // 处理角色拾取武器
+    processCharacterWeaponPickup(character);
+    processCharacterWeaponPickup(enemy);
+}
+
+void BattleScene::processCharacterWeaponPickup(Character* character) {
+    if (!character || !character->isPicking()) {
+        return;
+    }
+    
+    // 查找附近的武器
+    Weapon* nearestWeapon = findNearestWeapon(character->pos(), PhysicsConstants::PICKUP_DISTANCE);
+    if (nearestWeapon && !isWeaponEquipped(nearestWeapon)) {
+        // 使用武器管理器处理拾取逻辑
+        Weapon* oldWeapon = WeaponManager::handleWeaponPickup(character, nearestWeapon);
+        
+        // 注意：不需要手动从场景移除武器，因为setParentItem会自动处理
+        // removeItem(nearestWeapon); // 这行是多余的，会导致武器不显示
+        
+        // 如果有被替换的武器，删除它（直接消失）
+        if (oldWeapon) {
+            delete oldWeapon;
+        }
+        
+        qDebug() << "Character picked up weapon:" << nearestWeapon->getWeaponname();
+    }
+}
+
+Weapon* BattleScene::findNearestWeapon(const QPointF& pos, qreal distanceThreshold) {
+    Weapon* nearest = nullptr;
+    qreal minDistance = distanceThreshold;
+    
+    for (QGraphicsItem* item : items()) {
+        if (auto weapon = dynamic_cast<Weapon*>(item)) {
+            if (!isWeaponEquipped(weapon)) {
+                qreal distance = QLineF(pos, item->pos()).length();
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearest = weapon;
+                }
+            }
+        }
+    }
+    
+    return nearest;
+}
+
+bool BattleScene::isWeaponEquipped(Weapon* weapon) {
+    // 如果武器有父对象（即被角色装备），则认为它已被装备
+    // 掉落的武器应该没有父对象或者父对象是场景本身
+    return weapon && weapon->parentItem() != nullptr;
 }

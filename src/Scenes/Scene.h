@@ -22,7 +22,6 @@ public:
 
     virtual void processMovement();
 
-    virtual void processPicking();
 
 protected slots:
 

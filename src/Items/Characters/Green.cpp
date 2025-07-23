@@ -3,12 +3,9 @@
 //
 
 #include <memory>
-#include "Link.h"
-#include "../HeadEquipments/CapOfTheHero.h"
-#include "../Armors/OldShirt.h"
-#include "../LegEquipments/WellWornTrousers.h"
+#include "Green.h"
 
-Link::Link(QGraphicsItem *parent) : Character(parent) {
+Green::Green(QGraphicsItem *parent) : Character(parent) {
     edgeTolerance = 45; // 设置边界容忍度
     characterPixmapPaths = {
         { "normal", ":/Items/Characters/green/character_green_front.png" },

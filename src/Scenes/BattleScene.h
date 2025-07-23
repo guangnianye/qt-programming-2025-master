@@ -11,6 +11,7 @@
 #include "Scene.h"
 #include "../Items/Maps/Map.h"
 #include "../Items/Characters/Character.h"
+#include "../Items/Weapons/WeaponManager.h"
 
 class BattleScene : public Scene {
 Q_OBJECT
@@ -22,8 +23,6 @@ public:
 
     void processMovement() override;
 
-    void processPicking() override;
-
     void processPhysics(); //处理重力物理
 
     void processAttacks(); // 处理攻击逻辑
@@ -33,6 +32,10 @@ public:
     void processMeleeAttack(Character* attacker, const QString& attackerName); // 处理近战攻击逻辑
 
     void processRangedAttack(Character* attacker, const QString& attackerName); // 处理远程攻击逻辑
+
+    void processWeaponPickup(); // 处理武器拾取逻辑
+
+    void processCharacterWeaponPickup(Character* character); // 处理单个角色的武器拾取
 
 protected slots:
 
@@ -44,15 +47,15 @@ protected:
     void keyReleaseEvent(QKeyEvent *event) override;
 
 private:
-
-    Mountable *findNearestUnmountedMountable(const QPointF &pos, qreal distance_threshold = std::numeric_limits<qreal>::max());
-
-    static Mountable * pickupMountable(Character *character, Mountable *mountable);
+    Weapon* findNearestWeapon(const QPointF& pos, qreal distanceThreshold); // 查找附近的武器
+    
+    bool isWeaponEquipped(Weapon* weapon); // 检查武器是否被装备
 
     Map *map;
     Character *character;
     Character *enemy; // 可能的敌人角色
-    Armor *spareArmor;
+    WeaponManager *weaponManager; // 武器管理器
+    
     // 血量显示UI元素
     QGraphicsRectItem *healthBarBackground;  // 血量条背景
     QGraphicsRectItem *healthBarForeground;  // 血量条前景

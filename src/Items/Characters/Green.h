@@ -8,9 +8,9 @@
 
 #include "Character.h"
 
-class Link : public Character {
+class Green : public Character {
 public:
-    explicit Link(QGraphicsItem *parent = nullptr);
+    explicit Green(QGraphicsItem *parent = nullptr);
 };
 
 
