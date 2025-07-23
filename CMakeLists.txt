@@ -63,6 +63,8 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Weapons/Projectile.h
         src/Items/Weapons/ThrowingStone.cpp
         src/Items/Weapons/ThrowingStone.h
+        src/Items/Weapons/Raygun.cpp
+        src/Items/Weapons/Raygun.h
         src/Physics/PhysicsConstants.h)
 target_link_libraries(qt_programming_2024
         Qt::Core
