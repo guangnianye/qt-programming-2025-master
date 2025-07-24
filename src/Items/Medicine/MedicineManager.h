@@ -71,7 +71,7 @@ private:
     
     // 默认掉落参数
     static constexpr int DEFAULT_DROP_INTERVAL = 8000;  // 8秒（比武器稍慢）
-    static constexpr int DROP_HEIGHT_OFFSET = -100;     // 从屏幕上方掉落
+    static constexpr int DROP_HEIGHT_OFFSET = -200;     // 从屏幕上方掉落
     static constexpr qreal DEFAULT_DROP_PROBABILITY = 0.7; // 70%概率掉落
     
     // 获取随机掉落位置

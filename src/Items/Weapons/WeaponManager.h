@@ -71,7 +71,7 @@ private:
     
     // 默认掉落参数
     static constexpr int DEFAULT_DROP_INTERVAL = 5000;  // 5秒
-    static constexpr int DROP_HEIGHT_OFFSET = -100;     // 从屏幕上方掉落
+    static constexpr int DROP_HEIGHT_OFFSET = -200;     // 从屏幕上方掉落
     
     // 获取随机掉落位置
     QPointF getRandomDropPosition() const;

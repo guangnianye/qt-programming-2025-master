@@ -141,7 +141,8 @@ QPointF MedicineManager::getRandomDropPosition() const {
     
     qreal randomX = dropArea.left() + 
                    QRandomGenerator::global()->generateDouble() * dropArea.width();
-    qreal dropY = dropArea.top() + DROP_HEIGHT_OFFSET;
+    // 让药物从屏幕上方开始掉落，实现自然掉落效果
+    qreal dropY = DROP_HEIGHT_OFFSET;  // 从屏幕上方开始掉落
     
     return QPointF(randomX, dropY);
 }

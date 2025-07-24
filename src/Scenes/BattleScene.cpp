@@ -268,28 +268,33 @@ void BattleScene::processPhysics() {
         
         if (shouldApplyPhysics) {
             // 为未装备的物品应用简单的重力,适配新的平台机制而不是原来的地面机制
-            QPointF itemPos = QPointF(item->pos().x(), item->pos().y() - item->boundingRect().height());
-            qreal floorHeight = map->getFloorHeightAt(itemPos.x());
-            const Platform *platform = map->getNearestPlatform(item->pos());
+            QPointF currentPos = item->pos();
+            QPointF itemBottomPos = QPointF(currentPos.x(), currentPos.y() + item->boundingRect().height());
+            qreal floorHeight = map->getFloorHeightAt(currentPos.x());
+            const Platform *platform = map->getNearestPlatform(itemBottomPos);
+            
+            // 计算合适的重力移动距离（考虑帧率）
+            qreal gravityMove = PhysicsConstants::ITEM_FALL_SPEED * deltaTime / 1000.0; // 转换为像素/帧
+            
             if (platform)
             {
                 // 如果物品在平台上，保持其高度
-                if (platform->containsPoint(itemPos)) {
-                    item->setPos(itemPos.x(), platform->height - item->boundingRect().height());
+                if (platform->containsPoint(itemBottomPos)) {
+                    item->setPos(currentPos.x(), platform->height - item->boundingRect().height());
                 } else {
                     // 否则应用重力
-                    if (itemPos.y() < floorHeight) {
-                        item->setPos(itemPos.x(), floorHeight - item->boundingRect().height());
+                    if (itemBottomPos.y() >= floorHeight) {
+                        item->setPos(currentPos.x(), floorHeight - item->boundingRect().height());
                     } else {
-                        item->setPos(itemPos.x(), itemPos.y() + PhysicsConstants::GRAVITY_ACCELERATION);
+                        item->setPos(currentPos.x(), currentPos.y() + gravityMove);
                     }
                 }
             } else {
                 // 如果没有找到平台，应用重力到地面高度
-                if (itemPos.y() < floorHeight) {
-                    item->setPos(itemPos.x(), floorHeight - item->boundingRect().height());
+                if (itemBottomPos.y() >= floorHeight) {
+                    item->setPos(currentPos.x(), floorHeight - item->boundingRect().height());
                 } else {
-                    item->setPos(itemPos.x(), itemPos.y() + PhysicsConstants::GRAVITY_ACCELERATION);
+                    item->setPos(currentPos.x(), currentPos.y() + gravityMove);
                 }
             }
         }

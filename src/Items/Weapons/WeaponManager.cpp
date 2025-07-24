@@ -167,15 +167,15 @@ void WeaponManager::removeDepletedRangedWeapon(Character* character) {
 
 QPointF WeaponManager::getRandomDropPosition() const {
     if (dropArea.isEmpty()) {
-        return QPointF(0, 0);
+        return QPointF(0, DROP_HEIGHT_OFFSET);
     }
     
     // 在掉落区域内生成随机X坐标
     qreal randomX = dropArea.left() + 
                    QRandomGenerator::global()->generateDouble() * dropArea.width();
     
-    // Y坐标固定在掉落区域顶部
-    qreal dropY = dropArea.top();
+    // Y坐标设置在屏幕上方，让物品自然掉落
+    qreal dropY = DROP_HEIGHT_OFFSET;  // 从屏幕上方开始掉落
     
     return QPointF(randomX, dropY);
 }
