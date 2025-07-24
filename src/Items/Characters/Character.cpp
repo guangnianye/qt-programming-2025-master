@@ -145,15 +145,16 @@ QRectF Character::getAttackRange() const {
     // 根据角色朝向和武器攻击范围计算攻击范围
     QRectF characterRect = boundingRect();
     qreal range = weapon ? weapon->getAttackRange() : PhysicsConstants::ATTACK_RANGE; // 使用武器的攻击范围
+    qreal attacktolerance = 40; // 边界容忍度
     if (directionRight) {
         // 向右攻击
-        return QRectF(pos().x(), 
+        return QRectF(pos().x() - attacktolerance, 
                       pos().y(), 
                       range, 
                       characterRect.height());
     } else {
         // 向左攻击
-        return QRectF(pos().x() - range, 
+        return QRectF(pos().x() + attacktolerance, 
                       pos().y(), 
                       range, 
                       characterRect.height());

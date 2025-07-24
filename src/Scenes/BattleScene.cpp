@@ -391,11 +391,36 @@ void BattleScene::processMeleeAttack(Character* attacker, const QString& attacke
     
     // 检查攻击范围内的物品
     for (QGraphicsItem *item : items()) {
-        // 检查是否与攻击范围相交
-        if (item != attacker && item->boundingRect().translated(item->pos()).intersects(attackRange)) {
-            // 检查是否攻击到其他角色
-            if (auto targetCharacter = dynamic_cast<Character *>(item)) {
-                if (targetCharacter->isAlive()) {
+        // 跳过攻击者自己
+        if (item == attacker) {
+            continue;
+        }
+        
+        // 检查是否攻击到其他角色
+        if (auto targetCharacter = dynamic_cast<Character *>(item)) {
+            if (targetCharacter->isAlive()) {
+                // 获取目标角色的实际边界，考虑其朝向
+                QRectF targetBounds = targetCharacter->boundingRect();
+                QPointF targetPos = targetCharacter->pos();
+                
+                // 根据目标角色的朝向调整其实际边界
+                QRectF actualTargetBounds;
+                if (targetCharacter->isDirectionRight()) {
+                    // 目标朝向右，边界在pos左侧
+                    actualTargetBounds = QRectF(targetPos.x() - targetBounds.width(), 
+                                               targetPos.y(), 
+                                               targetBounds.width(), 
+                                               targetBounds.height());
+                } else {
+                    // 目标朝向左，边界在pos右侧
+                    actualTargetBounds = QRectF(targetPos.x(), 
+                                               targetPos.y(), 
+                                               targetBounds.width(), 
+                                               targetBounds.height());
+                }
+                
+                // 检查攻击范围是否与目标角色的实际边界相交
+                if (attackRange.intersects(actualTargetBounds)) {
                     // 使用攻击者当前武器的伤害值
                     qreal weaponDamage = attacker->getWeapon()->getDamage();
                     
@@ -404,6 +429,12 @@ void BattleScene::processMeleeAttack(Character* attacker, const QString& attacke
                             << "! Damage:" << weaponDamage 
                             << "Target health:" << targetCharacter->getCurrentHealth();
                 }
+            }
+        } else {
+            // 对于非角色物品，使用原来的简单碰撞检测
+            if (item->boundingRect().translated(item->pos()).intersects(attackRange)) {
+                // 这里可以处理攻击到其他物品的逻辑（如果需要的话）
+                // 比如破坏箱子、激活机关等
             }
         }
     }
