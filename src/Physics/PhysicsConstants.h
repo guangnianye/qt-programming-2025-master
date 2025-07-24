@@ -30,6 +30,9 @@ public:
     static constexpr qreal ATTACK_RANGE = 80.0;             // 攻击范围 像素
     static constexpr qreal ATTACK_DAMAGE = 10.0;            // 攻击伤害
     
+    // 受击状态相关常量
+    static constexpr qreal HIT_RECOVERY = 300.0;            // 受击状态显示时间 毫秒
+    
     // 血量系统相关常量
     static constexpr qreal DEFAULT_MAX_HEALTH = 200.0;      // 默认最大血量
 };

@@ -61,6 +61,8 @@ public:
 
     void processAttack();
 
+    void processHitState(); // 处理受击状态
+
     [[nodiscard]] bool isCurrentlyAttacking() const;
 
     [[nodiscard]] QRectF getAttackRange() const;
@@ -161,6 +163,10 @@ private:
     qreal attackTimer{};         // 攻击计时器
     qreal attackIntervalTimer{}; // 攻击间隔计时器（用于连击间隔）
     qreal attackRecoveryTimer{}; // 攻击后摇计时器（用于显示状态）
+    
+    // 受击状态相关属性
+    bool isBeingHit{};           // 是否正在被击打状态
+    qreal hitRecoveryTimer{};    // 受击后摇计时器（用于显示状态）
     
     // 血量系统相关属性
     qreal currentHealth{100.0};  // 当前血量

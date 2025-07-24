@@ -10,7 +10,8 @@ Green::Green(QGraphicsItem *parent) : Character(parent) {
     characterPixmapPaths = {
         { "normal", ":/Items/Characters/green/character_green_front.png" },
         { "duck", ":/Items/Characters/green/character_green_duck.png" },
-        { "attack", ":/Items/Characters/green/character_green_jump.png" }
+        { "attack", ":/Items/Characters/green/character_green_jump.png" },
+        { "hit", ":/Items/Characters/green/character_green_hit.png" }
     };
     updatePixmapItem("normal");
 }

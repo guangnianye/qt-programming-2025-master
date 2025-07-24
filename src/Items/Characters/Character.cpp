@@ -120,6 +120,23 @@ void Character::processAttack() {
     lastAttackDown = attackDown;
 }
 
+void Character::processHitState() {
+    const qreal frameTime = 11.11; // 90FPS，每帧约11.11毫秒
+    
+    // 更新受击状态计时器
+    if (hitRecoveryTimer > 0) {
+        hitRecoveryTimer -= frameTime;
+        // 受击状态结束，恢复正常显示
+        if (hitRecoveryTimer <= 0) {
+            isBeingHit = false;
+            updatePixmapItem("normal");
+            // 恢复正常状态时保持当前方向
+            setDirection(directionRight);
+            qDebug() << "Hit recovery finished";
+        }
+    }
+}
+
 bool Character::isCurrentlyAttacking() const {
     return isPerformingAttack;
 }
@@ -189,8 +206,8 @@ void Character::processInput() {
     }
 
     // 处理蹲下状态
-    if (isSquatting() && onGround) {
-        // 如果蹲下，设置Y方向速度为0
+    if (isSquatting() && onGround && (hitRecoveryTimer <= 0)) {
+        // 如果蹲下，设置Y方向速度为0（不在受击状态时）
         newVelocity.setY(0);
         newVelocity.setX(0); // 蹲下时不移动
         updatePixmapItem("duck");
@@ -199,10 +216,10 @@ void Character::processInput() {
     }
 
     // 处理正常状态的显示（只有在不处于特殊状态时）
-    if (!isSquatting() && (attackRecoveryTimer <= 0)) {
+    if (!isSquatting() && (attackRecoveryTimer <= 0) && (hitRecoveryTimer <= 0)) {
         // 保持当前方向的变换
         setDirection(directionRight);
-        // 只有在不处于攻击后摇期间才设置为normal
+        // 只有在不处于攻击后摇期间和受击状态期间才设置为normal
         updatePixmapItem("normal");
     }
     
@@ -217,6 +234,9 @@ void Character::processInput() {
 
     // 处理攻击
     processAttack();
+    
+    // 处理受击状态
+    processHitState();
     
     // 处理不同种类平台的逻辑
     processPlatformstypes();
@@ -330,6 +350,13 @@ void Character::takeDamage(qreal damage) {
             currentHealth = 0;
         }
         qDebug() << "Character took" << damage << "damage. Health:" << currentHealth << "/" << maxHealth;
+        
+        // 触发受击状态
+        isBeingHit = true;
+        hitRecoveryTimer = PhysicsConstants::HIT_RECOVERY;
+        updatePixmapItem("hit");
+        // 受击时保持当前方向
+        setDirection(directionRight);
         
         // 更新血量条显示
         updateHealthBar();
