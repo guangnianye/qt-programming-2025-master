@@ -43,6 +43,7 @@ private:
 
 signals:
     void mapSelected(int mapId);
+    void returnToModeSelection();
 
 };
 

@@ -14,12 +14,15 @@
 #include "../Items/Weapons/WeaponManager.h"
 #include "../Items/Medicine/MedicineManager.h"
 #include "../Items/PickupManager.h"
+#include "../AI/PathFinder.h"
+#include "../AI/AIController.h"
+#include "../GameMode.h"
 
 class BattleScene : public Scene {
 Q_OBJECT
 
 public:
-    explicit BattleScene(QObject *parent, int mapId = 1);
+    explicit BattleScene(QObject *parent, int mapId = 1, GameMode gameMode = GameMode::PvP);
     ~BattleScene(); // 析构函数，确保正确清理资源
 
     void processInput() override;
@@ -43,6 +46,18 @@ public:
     void processItemPickup(); // 处理物品拾取逻辑（包括武器和药物）
     
     void processCharacterItemPickup(Character* character); // 处理单个角色的物品拾取
+    
+    // AI相关方法
+    void initializeAI(); // 初始化AI系统
+    void enableAI(bool enabled); // 启用/禁用AI
+    void setAITarget(Character* aiCharacter, const QPointF& target); // 设置AI目标位置
+    void setAITargetCharacter(Character* aiCharacter, Character* target); // 设置AI目标角色
+    bool isAIEnabled() const; // 检查AI是否启用
+    
+    // 游戏模式相关方法
+    GameMode getCurrentGameMode() const { return currentGameMode; }
+    void setGameMode(GameMode mode);
+    QString getGameModeDisplayText() const;
 
 protected slots:
 
@@ -66,6 +81,17 @@ private:
     WeaponManager *weaponManager; // 武器管理器
     MedicineManager *medicineManager; // 药物管理器
     PickupManager *pickupManager; // 统一拾取管理器
+    
+    // 游戏模式
+    GameMode currentGameMode; // 当前游戏模式
+    
+    // AI系统组件
+    PathFinder *pathFinder; // 路径寻找器
+    AIController *aiController; // AI控制器（控制enemy角色）
+    bool aiEnabled; // AI是否启用
+    
+    // UI元素
+    QGraphicsTextItem *gameModeText; // 游戏模式显示文本
     
     // 血量显示UI元素
     QGraphicsRectItem *healthBarBackground;  // 血量条背景

@@ -72,7 +72,17 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Medicine/MagicPotion.h
         src/Items/PickupManager.cpp
         src/Items/PickupManager.h
-        src/Physics/PhysicsConstants.h)
+        src/Physics/PhysicsConstants.h
+        src/AI/NavigationNode.cpp
+        src/AI/NavigationNode.h
+        src/AI/PathFinder.cpp
+        src/AI/PathFinder.h
+        src/AI/AIController.cpp
+        src/AI/AIController.h
+        src/GameMode.cpp
+        src/GameMode.h
+        src/Scenes/GameModeSelectionScene.cpp
+        src/Scenes/GameModeSelectionScene.h)
 target_link_libraries(qt_programming_2024
         Qt::Core
         Qt::Gui

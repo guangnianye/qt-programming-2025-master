@@ -34,6 +34,7 @@ private:
 
 signals:
     void returnToMapSelection();
+    void returnToModeSelection();
     void restartBattle();
 };
 

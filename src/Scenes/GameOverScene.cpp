@@ -58,7 +58,7 @@ void GameOverScene::setupUI() {
     
     // 创建操作指示文本
     instructionText = new QGraphicsTextItem();
-    instructionText->setPlainText("Press R to Restart Battle\nPress ESC to Return to Map Selection");
+    instructionText->setPlainText("Press R to Restart Battle\nPress M to Return to Map Selection\nPress ESC to Return to Mode Selection");
     instructionText->setFont(QFont("Agency FB", 18, QFont::Normal)); // 稍微增大字体
     instructionText->setDefaultTextColor(QColor(255, 255, 0)); // 白色
     // 添加文字阴影效果
@@ -113,10 +113,15 @@ void GameOverScene::keyPressEvent(QKeyEvent *event) {
             qDebug() << "GameOverScene: Restart battle requested";
             emit restartBattle();
             break;
-        case Qt::Key_Escape:
+        case Qt::Key_M:
             // 返回地图选择
             qDebug() << "GameOverScene: Return to map selection requested";
             emit returnToMapSelection();
+            break;
+        case Qt::Key_Escape:
+            // 返回游戏模式选择
+            qDebug() << "GameOverScene: Return to mode selection requested";
+            emit returnToModeSelection();
             break;
         default:
             Scene::keyPressEvent(event);

@@ -75,6 +75,9 @@ public:
 
     // 墙的一些方法
     virtual QVector<Wall> getWalls();
+    
+    // 平台访问方法
+    virtual const QVector<Platform>& getPlatforms() const { return platforms; }
 
 protected:
     // 墙数据

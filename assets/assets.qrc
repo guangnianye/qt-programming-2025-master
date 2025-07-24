@@ -18,5 +18,6 @@
         <file>Items/Medicine/mushroom.png</file>
         <file>Backgrounds/ChooseBattlefieldSceneBackground.png</file>
         <file>Backgrounds/GameOverBackground.png</file>
+        <file>Backgrounds/GameModeSelectionSceneBackground.png</file>
     </qresource>
 </RCC>

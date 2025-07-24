@@ -202,8 +202,8 @@ void ChooseBattlefieldScene::update() {
 void ChooseBattlefieldScene::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
         case Qt::Key_Escape:
-            qDebug() << "按ESC退出游戏";
-            QCoreApplication::quit();
+            qDebug() << "按ESC返回游戏模式选择";
+            emit returnToModeSelection();
             break;
         case Qt::Key_Left:
         case Qt::Key_A:
