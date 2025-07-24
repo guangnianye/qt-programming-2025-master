@@ -8,10 +8,13 @@
 #include <QGraphicsEllipseItem>
 #include <QGraphicsRectItem>
 #include <QGraphicsTextItem>
+#include <QTimer>
+#include <QMap>
 #include "../Weapons/Weapon.h"
 #include "../Weapons/Fist.h"
 #include "../../Physics/PhysicsConstants.h"
 #include "../Maps/Map.h"
+#include "BuffSystem.h"
 
 class Map; // 前向声明
 
@@ -123,6 +126,14 @@ public:
     void setDirection(bool right);
     [[nodiscard]] bool isDirectionRight() const;
 
+    // 增益系统相关方法
+    void applyBuff(const BuffEffect& buff);
+    void removeBuff(const QString& buffName);
+    void clearAllBuffs();
+    [[nodiscard]] qreal getCurrentSpeedMultiplier() const;
+    [[nodiscard]] bool hasBuff(const QString& buffName) const;
+    void updateBuffs(qreal deltaTime);
+
     // 不同种类平台方法
     void processPlatformstypes();
   
@@ -162,6 +173,11 @@ private:
     
     // 地图引用
     Map* map{nullptr};           // 当前地图的引用
+    
+    // 增益系统相关属性
+    QMap<QString, BuffEffect> activeBuffs;     // 当前激活的增益效果
+    QMap<QString, QTimer*> buffTimers;         // 增益持续时间定时器
+    QMap<QString, QTimer*> buffTickTimers;     // 增益触发定时器（用于持续性效果）
 };
 
 

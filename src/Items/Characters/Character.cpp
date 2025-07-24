@@ -3,6 +3,7 @@
 //
 
 #include <QTransform>
+#include <QTimer>
 #include "Character.h"
 #include "../Maps/Map.h"
 #include <QDebug>
@@ -158,7 +159,8 @@ void Character::processInput() {
     }
     
     auto newVelocity = velocity; // 保持当前的Y方向速度
-    const auto moveSpeed = PhysicsConstants::HORIZONTAL_MOVE_SPEED; // 使用物理常量
+    const auto baseMoveSpeed = PhysicsConstants::HORIZONTAL_MOVE_SPEED; // 基础移动速度
+    const auto moveSpeed = baseMoveSpeed * getCurrentSpeedMultiplier(); // 应用增益后的移动速度
     
     // 水平移动 (只影响X方向速度)
     newVelocity.setX(0); // 重置水平速度
@@ -667,6 +669,111 @@ void Character::setHealthBarVisible(bool visible) {
     if (healthText) {
         healthText->setVisible(visible);
     }
+}
+
+#pragma endregion
+
+#pragma region Buff System
+
+void Character::applyBuff(const BuffEffect& buff) {
+    // 如果已有同名增益，先移除
+    if (hasBuff(buff.name)) {
+        removeBuff(buff.name);
+    }
+    
+    // 添加新增益
+    activeBuffs[buff.name] = buff;
+    
+    // 设置持续时间定时器
+    if (buff.duration > 0) {
+        QTimer* durationTimer = new QTimer();
+        durationTimer->setSingleShot(true);
+        durationTimer->setInterval(buff.duration);
+        
+        // 将增益名称存储在定时器属性中
+        durationTimer->setProperty("buffName", buff.name);
+        
+        QObject::connect(durationTimer, &QTimer::timeout, [this, durationTimer, buff]() {
+            removeBuff(buff.name);
+            durationTimer->deleteLater();
+        });
+        buffTimers[buff.name] = durationTimer;
+        durationTimer->start();
+    }
+    
+    // 设置持续性效果定时器（如血量回复）
+    if (buff.healthRegenRate > 0 && buff.tickInterval > 0) {
+        QTimer* tickTimer = new QTimer();
+        tickTimer->setInterval(buff.tickInterval);
+        
+        // 将增益名称存储在定时器属性中
+        tickTimer->setProperty("buffName", buff.name);
+        
+        QObject::connect(tickTimer, &QTimer::timeout, [this, buff]() {
+            if (activeBuffs.contains(buff.name)) {
+                const BuffEffect& currentBuff = activeBuffs[buff.name];
+                if (currentBuff.healthRegenRate > 0) {
+                    heal(currentBuff.healthRegenRate);
+                }
+            }
+        });
+        buffTickTimers[buff.name] = tickTimer;
+        tickTimer->start();
+    }
+    
+    qDebug() << "Applied buff:" << buff.name 
+             << "Speed multiplier:" << buff.speedMultiplier
+             << "Health regen:" << buff.healthRegenRate << "/sec"
+             << "Duration:" << buff.duration << "ms";
+}
+
+void Character::removeBuff(const QString& buffName) {
+    // 移除增益效果
+    activeBuffs.remove(buffName);
+    
+    // 清理持续时间定时器
+    if (buffTimers.contains(buffName)) {
+        buffTimers[buffName]->stop();
+        buffTimers[buffName]->deleteLater();
+        buffTimers.remove(buffName);
+    }
+    
+    // 清理触发定时器
+    if (buffTickTimers.contains(buffName)) {
+        buffTickTimers[buffName]->stop();
+        buffTickTimers[buffName]->deleteLater();
+        buffTickTimers.remove(buffName);
+    }
+    
+    qDebug() << "Removed buff:" << buffName;
+}
+
+void Character::clearAllBuffs() {
+    // 复制键列表，避免在迭代时修改容器
+    QStringList buffNames = activeBuffs.keys();
+    for (const QString& buffName : buffNames) {
+        removeBuff(buffName);
+    }
+}
+
+qreal Character::getCurrentSpeedMultiplier() const {
+    qreal totalMultiplier = 1.0;
+    
+    for (const BuffEffect& buff : activeBuffs.values()) {
+        totalMultiplier *= buff.speedMultiplier;
+    }
+    
+    return totalMultiplier;
+}
+
+bool Character::hasBuff(const QString& buffName) const {
+    return activeBuffs.contains(buffName);
+}
+
+void Character::updateBuffs(qreal deltaTime) {
+    // 目前定时器系统自动处理增益更新
+    // 这个方法保留用于未来可能的手动更新需求
+    Q_UNUSED(deltaTime)
 }
 
 #pragma endregion

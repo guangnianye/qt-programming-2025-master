@@ -20,6 +20,7 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Item.h
         src/Items/Characters/Character.cpp
         src/Items/Characters/Character.h
+        src/Items/Characters/BuffSystem.h
         src/Items/Characters/Green.cpp
         src/Items/Characters/Green.h
         src/Scenes/Scene.cpp
@@ -61,6 +62,12 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Medicine/Medicine.h
         src/Items/Medicine/MedicineManager.cpp
         src/Items/Medicine/MedicineManager.h
+        src/Items/Medicine/HealthPotion.cpp
+        src/Items/Medicine/HealthPotion.h
+        src/Items/Medicine/EnergyBoost.cpp
+        src/Items/Medicine/EnergyBoost.h
+        src/Items/Medicine/MagicPotion.cpp
+        src/Items/Medicine/MagicPotion.h
         src/Items/PickupManager.cpp
         src/Items/PickupManager.h
         src/Physics/PhysicsConstants.h)

@@ -29,10 +29,6 @@ void Map::scaleToFitScene(QGraphicsScene *scene) {
     // Apply the scale to the item
     setTransform(QTransform::fromScale(scaleFactor, scaleFactor), true);
 
-    // Center the item in the scene (optional)
-    // setPos((sceneRect.width() - boundingRect().width() * scaleFactor) / 2,
-    //        (sceneRect.height() - boundingRect().height() * scaleFactor) / 2);
-
 }
 
 QPointF Map::getSpawnPos() {

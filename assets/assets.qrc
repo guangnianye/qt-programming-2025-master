@@ -11,6 +11,7 @@
         <file>Items/Weapons/Raygun/bullet.png</file>
         <file>Items/Medicine/full_heart.png</file>
         <file>Items/Medicine/half_heart.png</file>
+        <file>Items/Medicine/mushroom.png</file>
         <file>Backgrounds/ChooseBattlefieldSceneBackground.png</file>
     </qresource>
 </RCC>

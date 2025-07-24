@@ -15,12 +15,12 @@
 
 class Character;
 
-// 药物类型枚举，用于随机生成（目前为空，等待具体药物实现）
+// 药物类型枚举，用于随机生成
 enum class MedicineDropType {
-    // 未来添加具体药物类型，如：
-    // HealthPotion,
-    // EnergyBoost,
-    // etc.
+    HealthPotion,    // 健康药水
+    EnergyBoost,     // 能量提升
+    MagicPotion,     // 魔法药水
+    // 未来可以添加更多药物类型
 };
 
 // 药物管理器类

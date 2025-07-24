@@ -31,10 +31,7 @@ public:
     static constexpr qreal ATTACK_DAMAGE = 10.0;            // 攻击伤害
     
     // 血量系统相关常量
-    static constexpr qreal DEFAULT_MAX_HEALTH = 10000.0;      // 默认最大血量
-    static constexpr qreal HEAL_AMOUNT = 20.0;              // 默认治疗量
-    static constexpr qreal FALL_DAMAGE_THRESHOLD = 400.0;   // 摔落伤害阈值（像素/秒）
-    static constexpr qreal FALL_DAMAGE_MULTIPLIER = 0.05;   // 摔落伤害倍数
+    static constexpr qreal DEFAULT_MAX_HEALTH = 200.0;      // 默认最大血量
 };
 
 #endif //QT_PROGRAMMING_2024_PHYSICSCONSTANTS_H

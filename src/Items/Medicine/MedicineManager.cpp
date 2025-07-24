@@ -5,6 +5,9 @@
 #include "MedicineManager.h"
 #include "../Characters/Character.h"
 #include "../../Physics/PhysicsConstants.h"
+#include "HealthPotion.h"
+#include "EnergyBoost.h"
+#include "MagicPotion.h"
 
 MedicineManager::MedicineManager(QGraphicsScene* scene, QObject* parent)
     : QObject(parent), gameScene(scene), dropTimer(new QTimer(this)),
@@ -51,23 +54,41 @@ void MedicineManager::dropMedicine(MedicineDropType medicineType, const QPointF&
 }
 
 Medicine* MedicineManager::createMedicine(MedicineDropType medicineType, QGraphicsItem* parent) {
-    // 目前没有具体药物类型，返回nullptr
-    // 未来在这里实现具体药物的创建逻辑
-    Q_UNUSED(medicineType)
-    Q_UNUSED(parent)
-    return nullptr;
+    switch (medicineType) {
+        case MedicineDropType::HealthPotion:
+            return new HealthPotion(parent);
+        case MedicineDropType::EnergyBoost:
+            return new EnergyBoost(parent);
+        case MedicineDropType::MagicPotion:
+            return new MagicPotion(parent);
+        default:
+            qDebug() << "Unknown medicine type:" << static_cast<int>(medicineType);
+            return nullptr;
+    }
 }
 
 MedicineDropType MedicineManager::getRandomMedicineType() {
-    // 目前没有具体药物类型，需要等待具体药物实现
-    // 未来在这里实现随机药物类型选择
-    // 使用权重分配，类似武器系统
+    // 使用权重分配系统
+    QVector<MedicineDropType> weightedMedicines;
     
-    // QVector<MedicineDropType> weightedMedicines;
-    // ... 添加权重逻辑
+    for (int i = 0; i < 10; ++i) {
+        weightedMedicines.append(MedicineDropType::HealthPotion);
+    }
+
+    for (int i = 0; i < 8; ++i) {
+        weightedMedicines.append(MedicineDropType::EnergyBoost);
+    }
+
+    for (int i = 0; i < 2; ++i) {
+        weightedMedicines.append(MedicineDropType::MagicPotion);
+    }
     
-    // 临时返回，等待实现
-    return static_cast<MedicineDropType>(0);
+    if (weightedMedicines.isEmpty()) {
+        return MedicineDropType::HealthPotion; // 默认返回健康药水
+    }
+    
+    int randomIndex = QRandomGenerator::global()->bounded(weightedMedicines.size());
+    return weightedMedicines[randomIndex];
 }
 
 bool MedicineManager::handleMedicinePickup(Character* character, Medicine* medicine) {
@@ -105,11 +126,12 @@ void MedicineManager::dropRandomMedicine() {
         return; // 这次不掉落
     }
     
-    // 目前没有具体药物类型，所以暂时不执行掉落
-    // 未来实现：
-    // MedicineDropType medicineType = getRandomMedicineType();
-    // QPointF dropPosition = getRandomDropPosition();
-    // dropMedicine(medicineType, dropPosition);
+    // 获取随机药物类型并掉落
+    MedicineDropType medicineType = getRandomMedicineType();
+    QPointF dropPosition = getRandomDropPosition();
+    dropMedicine(medicineType, dropPosition);
+    
+    qDebug() << "Dropped medicine at position:" << dropPosition;
 }
 
 QPointF MedicineManager::getRandomDropPosition() const {
