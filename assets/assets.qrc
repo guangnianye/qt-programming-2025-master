@@ -9,6 +9,8 @@
         <file>Items/Weapons/Raygun/raygun.png</file>
         <file>Items/Weapons/Raygun/raygunBig.png</file>
         <file>Items/Weapons/Raygun/bullet.png</file>
+        <file>Items/Medicine/full_heart.png</file>
+        <file>Items/Medicine/half_heart.png</file>
         <file>Backgrounds/ChooseBattlefieldSceneBackground.png</file>
     </qresource>
 </RCC>

@@ -10,6 +10,8 @@
 #include "../Items/Weapons/Fist.h"
 #include "../Items/Weapons/RangedWeapon.h"
 #include "../Items/Mountable.h"
+#include "../Items/PickupManager.h"
+#include "../Items/Medicine/MedicineManager.h"
 #include <QLineF>
 
 BattleScene::BattleScene(QObject *parent) : Scene(parent) {
@@ -47,6 +49,17 @@ BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     weaponManager->setDropArea(QRectF(sceneRect().left(), sceneRect().top() - 100, 
                                      sceneRect().width(), 50));
     weaponManager->startWeaponDrops();
+    
+    // 初始化药物管理器
+    medicineManager = new MedicineManager(this, this);
+    medicineManager->setDropArea(QRectF(sceneRect().left(), sceneRect().top() - 100, 
+                                       sceneRect().width(), 50));
+    medicineManager->startMedicineDrops();
+    
+    // 初始化统一拾取管理器
+    pickupManager = new PickupManager(this, this);
+    pickupManager->setWeaponManager(weaponManager);
+    pickupManager->setMedicineManager(medicineManager);
 }
 
 void BattleScene::processInput() {
@@ -207,7 +220,8 @@ void BattleScene::update() {
     Scene::update();
     processPhysics(); // 处理重力物理
     processAttacks(); // 处理攻击逻辑
-    processWeaponPickup(); // 处理武器拾取逻辑
+    // processWeaponPickup(); // 处理武器拾取逻辑 - 使用统一拾取管理器替代
+    processItemPickup(); // 处理物品拾取逻辑（包括武器和药物）
     // 血量显示现在由角色自己管理，不需要在场景中更新
 }
 
@@ -227,6 +241,14 @@ void BattleScene::processPhysics() {
             if (!isWeaponEquipped(weapon)) {
                 shouldApplyPhysics = true;
             }
+        }
+        // 检查药物（药物需要重力）
+        else if (auto medicine = dynamic_cast<Medicine *>(item)) {
+            shouldApplyPhysics = true;
+        }
+        // 检查其他可拾取物品
+        else if (auto pickable = dynamic_cast<Pickable *>(item)) {
+            shouldApplyPhysics = true;
         }
         
         if (shouldApplyPhysics) {
@@ -344,6 +366,21 @@ void BattleScene::processWeaponPickup() {
     // 处理角色拾取武器
     processCharacterWeaponPickup(character);
     processCharacterWeaponPickup(enemy);
+}
+
+void BattleScene::processItemPickup() {
+    // 使用统一拾取管理器处理物品拾取
+    processCharacterItemPickup(character);
+    processCharacterItemPickup(enemy);
+}
+
+void BattleScene::processCharacterItemPickup(Character* character) {
+    if (!character || !character->isPicking()) {
+        return;
+    }
+    
+    // 使用统一拾取管理器处理拾取
+    pickupManager->handlePickup(character);
 }
 
 void BattleScene::processCharacterWeaponPickup(Character* character) {

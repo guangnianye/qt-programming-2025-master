@@ -55,6 +55,14 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Weapons/RaygunBig.h
         src/Items/Weapons/WeaponManager.cpp
         src/Items/Weapons/WeaponManager.h
+        src/Items/Pickable.cpp
+        src/Items/Pickable.h
+        src/Items/Medicine/Medicine.cpp
+        src/Items/Medicine/Medicine.h
+        src/Items/Medicine/MedicineManager.cpp
+        src/Items/Medicine/MedicineManager.h
+        src/Items/PickupManager.cpp
+        src/Items/PickupManager.h
         src/Physics/PhysicsConstants.h)
 target_link_libraries(qt_programming_2024
         Qt::Core

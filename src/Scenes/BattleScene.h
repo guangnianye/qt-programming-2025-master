@@ -12,6 +12,8 @@
 #include "../Items/Maps/Map.h"
 #include "../Items/Characters/Character.h"
 #include "../Items/Weapons/WeaponManager.h"
+#include "../Items/Medicine/MedicineManager.h"
+#include "../Items/PickupManager.h"
 
 class BattleScene : public Scene {
 Q_OBJECT
@@ -36,6 +38,10 @@ public:
     void processWeaponPickup(); // 处理武器拾取逻辑
 
     void processCharacterWeaponPickup(Character* character); // 处理单个角色的武器拾取
+    
+    void processItemPickup(); // 处理物品拾取逻辑（包括武器和药物）
+    
+    void processCharacterItemPickup(Character* character); // 处理单个角色的物品拾取
 
 protected slots:
 
@@ -55,6 +61,8 @@ private:
     Character *character;
     Character *enemy; // 可能的敌人角色
     WeaponManager *weaponManager; // 武器管理器
+    MedicineManager *medicineManager; // 药物管理器
+    PickupManager *pickupManager; // 统一拾取管理器
     
     // 血量显示UI元素
     QGraphicsRectItem *healthBarBackground;  // 血量条背景

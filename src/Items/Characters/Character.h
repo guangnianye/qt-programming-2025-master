@@ -36,7 +36,7 @@ public:
 
     [[nodiscard]] bool isSquatting() const;
 
-    void setSquatting(bool squatting);
+    void setSquatting(bool squatting);;
 
     // 武器装备相关方法
     [[nodiscard]] Weapon *getWeapon() const {
@@ -81,8 +81,7 @@ public:
     void updateHealthBar();
     void setHealthBarVisible(bool visible);
 
-
-    // 检查是否装备了武器
+    // 检查是否装备了任何物品（包括武器）
     [[nodiscard]] bool isEquipped() const {
         return weapon != nullptr;
     }
