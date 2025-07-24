@@ -25,6 +25,13 @@ Character::Character(QGraphicsItem *parent):Item(parent,"") {
     setupHealthBar();
 }
 
+Character::~Character() {
+    // 清理所有buff和相关定时器
+    clearAllBuffs();
+    
+    qDebug() << "Character destructor: All buffs and timers cleared";
+}
+
 
 bool Character::isLeftDown() const {
     return leftDown;
@@ -442,26 +449,56 @@ void Character::processPlatformstypes() {
     if (map) {
         QPointF characterPos = QPointF(pos().x(), pos().y() + boundingRect().height());
         const Platform* platform = map->getPlatformAt(characterPos);
+        
+        // 首先检查是否离开了毒平台
+        if (hasBuff("Poison Damage") && (!platform || platform->type != Platform::Type::Poison)) {
+            // 角色离开了毒平台，移除毒素debuff
+            removeBuff("Poison Damage");
+            qDebug() << "Character left poison platform! Poison effect removed.";
+        }
+        
         if (platform) {
             switch (platform->type) {
                 case Platform::Type::Normal:
                     // 普通平台逻辑
                     pixmapItem->setOpacity(1.0); // 恢复不透明度
+                    jumpSpeed = PhysicsConstants::JUMP_SPEED; // 恢复正常跳跃速度
                     break;
                 case Platform::Type::Grass:
                     // 草地平台逻辑
                     if (isSquatting()){
+                        // 如果蹲下，设置半透明效果
                         pixmapItem->setOpacity(0.5); // 半透明
                         qDebug() << "Character is squatting on grass, setting opacity to 0.5";
                     }else {
                         pixmapItem->setOpacity(1.0); // 恢复不透明度
                     }
+                    jumpSpeed = PhysicsConstants::JUMP_SPEED; // 恢复正常跳跃速度
                     break;
                 case Platform::Type::Ice:
                     // 冰面平台逻辑
                     // 速度加快
                     pixmapItem->setOpacity(1.0); // 恢复不透明度
                     velocity.setX(velocity.x() * PhysicsConstants::ICE_FRICTION);
+                    jumpSpeed *=1.01; // 冰面跳跃速度加倍
+                    break;
+                case Platform::Type::Poison:
+                    // 毒平台逻辑
+                    pixmapItem->setOpacity(1.0); // 恢复不透明度
+                    jumpSpeed = PhysicsConstants::JUMP_SPEED; // 恢复正常跳跃速度
+                    
+                    // 应用毒素debuff（只有在没有该debuff时才应用）
+                    if (!hasBuff("Poison Damage")) {
+                        BuffEffect poisonDebuff(
+                            "Poison Damage",    // 名称
+                            1.0,                // 速度倍数（不变）
+                            -2.0,               // 血量回复速度（负值表示扣血，每秒扣2血）
+                            0,                  // 持续时间（0表示无限持续，直到离开平台）
+                            1000                // 触发间隔（1000ms = 1秒）
+                        );
+                        applyBuff(poisonDebuff);
+                        qDebug() << "Character stepped on poison platform! Taking 2 damage per second.";
+                    }
                     break;
                 default:
                     break;
@@ -686,34 +723,45 @@ void Character::applyBuff(const BuffEffect& buff) {
     
     // 设置持续时间定时器
     if (buff.duration > 0) {
-        QTimer* durationTimer = new QTimer();
+        QTimer* durationTimer = new QTimer(); // 不设置父对象，手动管理
         durationTimer->setSingleShot(true);
         durationTimer->setInterval(buff.duration);
         
         // 将增益名称存储在定时器属性中
         durationTimer->setProperty("buffName", buff.name);
         
-        QObject::connect(durationTimer, &QTimer::timeout, [this, durationTimer, buff]() {
-            removeBuff(buff.name);
+        // 使用更安全的连接方式
+        QObject::connect(durationTimer, &QTimer::timeout, [this, buff, durationTimer]() {
+            // 检查角色对象是否仍然有效
+            if (this && activeBuffs.contains(buff.name)) {
+                removeBuff(buff.name);
+            }
+            // 自动删除定时器
             durationTimer->deleteLater();
         });
         buffTimers[buff.name] = durationTimer;
         durationTimer->start();
     }
     
-    // 设置持续性效果定时器（如血量回复）
-    if (buff.healthRegenRate > 0 && buff.tickInterval > 0) {
-        QTimer* tickTimer = new QTimer();
+    // 设置持续性效果定时器（如血量回复或持续伤害）
+    if (buff.healthRegenRate != 0 && buff.tickInterval > 0) {
+        QTimer* tickTimer = new QTimer(); // 不设置父对象，手动管理
         tickTimer->setInterval(buff.tickInterval);
         
         // 将增益名称存储在定时器属性中
         tickTimer->setProperty("buffName", buff.name);
         
+        // 使用更安全的连接方式
         QObject::connect(tickTimer, &QTimer::timeout, [this, buff]() {
-            if (activeBuffs.contains(buff.name)) {
+            // 检查角色对象是否仍然有效且buff仍然存在
+            if (this && activeBuffs.contains(buff.name)) {
                 const BuffEffect& currentBuff = activeBuffs[buff.name];
                 if (currentBuff.healthRegenRate > 0) {
+                    // 正值：治疗
                     heal(currentBuff.healthRegenRate);
+                } else if (currentBuff.healthRegenRate < 0) {
+                    // 负值：伤害
+                    takeDamage(-currentBuff.healthRegenRate);
                 }
             }
         });
@@ -733,15 +781,21 @@ void Character::removeBuff(const QString& buffName) {
     
     // 清理持续时间定时器
     if (buffTimers.contains(buffName)) {
-        buffTimers[buffName]->stop();
-        buffTimers[buffName]->deleteLater();
+        QTimer* timer = buffTimers[buffName];
+        if (timer) {
+            timer->stop();
+            timer->deleteLater();
+        }
         buffTimers.remove(buffName);
     }
     
     // 清理触发定时器
     if (buffTickTimers.contains(buffName)) {
-        buffTickTimers[buffName]->stop();
-        buffTickTimers[buffName]->deleteLater();
+        QTimer* timer = buffTickTimers[buffName];
+        if (timer) {
+            timer->stop();
+            timer->deleteLater();
+        }
         buffTickTimers.remove(buffName);
     }
     
@@ -749,11 +803,30 @@ void Character::removeBuff(const QString& buffName) {
 }
 
 void Character::clearAllBuffs() {
-    // 复制键列表，避免在迭代时修改容器
-    QStringList buffNames = activeBuffs.keys();
-    for (const QString& buffName : buffNames) {
-        removeBuff(buffName);
+    qDebug() << "Clearing all buffs and timers...";
+    
+    // 停止并删除所有持续时间定时器
+    for (auto it = buffTimers.begin(); it != buffTimers.end(); ++it) {
+        if (it.value()) {
+            it.value()->stop();
+            it.value()->deleteLater();
+        }
     }
+    buffTimers.clear();
+    
+    // 停止并删除所有触发定时器
+    for (auto it = buffTickTimers.begin(); it != buffTickTimers.end(); ++it) {
+        if (it.value()) {
+            it.value()->stop();
+            it.value()->deleteLater();
+        }
+    }
+    buffTickTimers.clear();
+    
+    // 清理增益效果
+    activeBuffs.clear();
+    
+    qDebug() << "All buffs and timers cleared successfully";
 }
 
 qreal Character::getCurrentSpeedMultiplier() const {

@@ -58,7 +58,6 @@ void WeaponManager::dropWeapon(WeaponDropType weaponType, const QPointF& positio
     if (weapon) {
         // 设置位置并添加到场景
         weapon->setPos(position);
-        // 注意：武器不继承Mountable，所以不需要调用unmount()
         gameScene->addItem(weapon);
         
         qDebug() << "Dropped weapon" << weapon->getWeaponname() << "at position" << position;

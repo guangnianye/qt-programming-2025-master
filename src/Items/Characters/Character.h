@@ -24,6 +24,7 @@ public:
     QMap<QString,QString> characterPixmapPaths; // 角色的不同状态的图片集合
 public:
     explicit Character(QGraphicsItem *parent);
+    ~Character(); // 析构函数，用于清理资源
 
     [[nodiscard]] bool isLeftDown() const;
 

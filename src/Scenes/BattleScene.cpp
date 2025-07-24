@@ -14,10 +14,10 @@
 #include "../Items/Medicine/MedicineManager.h"
 #include <QLineF>
 
-BattleScene::BattleScene(QObject *parent) : Scene(parent) {
+BattleScene::BattleScene(QObject *parent, int mapId) : Scene(parent) {
     // This is useful if you want the scene to have the exact same dimensions as the view
     setSceneRect(0, 0, 960, 640);
-    map = new Battlefield();
+    map = new Battlefield(mapId);
     character = new Green();
     enemy = new Green(); // 这里可以替换为其他敌人角色
     addItem(map);
@@ -31,14 +31,12 @@ BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     enemy->setMap(map);
     
     // 设置角色位置并确保在地面上
-    QPointF spawnPos = map->getSpawnPos();
-    character->setPos(spawnPos);
-    character->handleGroundCollision(map->getFloorHeightAt(spawnPos.x())); // 确保角色在地面上
+    character->setPos(128,0);
+    character->handleGroundCollision(map->getFloorHeightAt(128)); // 确保角色在地面上
 
     // 设置敌人位置并确保在地面上
-    QPointF enemySpawnPos = QPointF(spawnPos.x() + 400, spawnPos.y());
-    enemy->setPos(enemySpawnPos);
-    enemy->handleGroundCollision(map->getFloorHeightAt(enemySpawnPos.x())); // 确保敌人在地面上
+    enemy->setPos(960,0);
+    enemy->handleGroundCollision(map->getFloorHeightAt(960)); // 确保敌人在地面上
     
     // 初始化角色武器为拳头
     character->equipWeapon(new Fist(character));
@@ -60,6 +58,22 @@ BattleScene::BattleScene(QObject *parent) : Scene(parent) {
     pickupManager = new PickupManager(this, this);
     pickupManager->setWeaponManager(weaponManager);
     pickupManager->setMedicineManager(medicineManager);
+}
+
+BattleScene::~BattleScene() {
+    qDebug() << "BattleScene destructor called";
+    
+    // 确保角色对象被正确清理，这会触发Character的析构函数
+    if (character) {
+        character->clearAllBuffs(); // 明确清理buff
+        qDebug() << "Character buffs cleared in BattleScene destructor";
+    }
+    if (enemy) {
+        enemy->clearAllBuffs(); // 明确清理buff
+        qDebug() << "Enemy buffs cleared in BattleScene destructor";
+    }
+    
+    qDebug() << "BattleScene destructor completed";
 }
 
 void BattleScene::processInput() {
@@ -223,6 +237,7 @@ void BattleScene::update() {
     // processWeaponPickup(); // 处理武器拾取逻辑 - 使用统一拾取管理器替代
     processItemPickup(); // 处理物品拾取逻辑（包括武器和药物）
     // 血量显示现在由角色自己管理，不需要在场景中更新
+    checkGameOver(); // 检查游戏是否结束
 }
 
 void BattleScene::processPhysics() {
@@ -429,4 +444,36 @@ bool BattleScene::isWeaponEquipped(Weapon* weapon) {
     // 如果武器有父对象（即被角色装备），则认为它已被装备
     // 掉落的武器应该没有父对象或者父对象是场景本身
     return weapon && weapon->parentItem() != nullptr;
+}
+
+void BattleScene::checkGameOver() {
+    bool characterAlive = character && character->isAlive();
+    bool enemyAlive = enemy && enemy->isAlive();
+    
+    // 检查角色是否掉落到底部之下（掉落死亡）
+    QRectF sceneRect = this->sceneRect();
+    if (character && character->pos().y() > sceneRect.bottom()) {
+        characterAlive = false;
+        qDebug() << "Player fell out of bounds! Game Over.";
+    }
+    if (enemy && enemy->pos().y() > sceneRect.bottom()) {
+        enemyAlive = false;
+        qDebug() << "Enemy fell out of bounds! Game Over.";
+    }
+    
+    // 如果任何一方死亡或掉落，触发游戏结束
+    if (!characterAlive || !enemyAlive) {
+        QString winner;
+        
+        if (characterAlive && !enemyAlive) {
+            winner = "Player"; // 玩家胜利
+        } else if (!characterAlive && enemyAlive) {
+            winner = "Enemy"; // 敌人胜利
+        } else {
+            winner = ""; // 平局（两者都死亡）
+        }
+        
+        qDebug() << "Game Over! Winner:" << (winner.isEmpty() ? "Draw" : winner);
+        emit gameOver(winner);
+    }
 }

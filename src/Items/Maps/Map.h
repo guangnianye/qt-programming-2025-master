@@ -19,7 +19,8 @@ struct Platform {
     enum class Type {
         Normal, // 普通平台
         Grass, // 草地平台
-        Ice // 冰面平台
+        Ice, // 冰面平台
+        Poison // 毒平台，持续扣血
     } type = Type::Normal; // 默认类型为普通平台
     
     Platform(QRectF r, qreal h, int p = 0,Type t = Type::Normal) 

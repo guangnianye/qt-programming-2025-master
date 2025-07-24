@@ -10,13 +10,16 @@
 
 class Battlefield: public Map {
 public:
-    explicit Battlefield(QGraphicsItem *parent= nullptr);
+    explicit Battlefield(int mapId = 1, QGraphicsItem *parent= nullptr);
 
     qreal getFloorHeight() override;
 
 protected:
     void initializePlatforms() override;
     void initializeWalls() override;
+    
+private:
+    int mapId; // 地图ID，用于区分不同的战场图片
 };
 
 

@@ -10,6 +10,7 @@
 #include "Scenes/Scene.h"
 #include "Scenes/ChooseBattlefieldScene.h"
 #include "Scenes/BattleScene.h"
+#include "Scenes/GameOverScene.h"
 
 class MyGame : public QMainWindow {
 Q_OBJECT
@@ -19,15 +20,20 @@ public:
 
 private slots:
     void onMapSelected(int mapId);
+    void onGameOver(const QString& winner);
+    void onRestartBattle();
 
 private:
     void switchToChooseMapScene();
     void switchToBattleScene(int mapId);
+    void switchToGameOverScene(const QString& winner);
     
     Scene *currentScene{nullptr};
     ChooseBattlefieldScene *chooseMapScene{nullptr};
     BattleScene *battleScene{nullptr};
+    GameOverScene *gameOverScene{nullptr};
     QGraphicsView *view{nullptr};
+    int currentMapId{1}; // 记录当前地图ID，用于重新开始战斗
 };
 
 

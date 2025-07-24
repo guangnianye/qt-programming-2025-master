@@ -25,6 +25,7 @@ MyGame::MyGame(QWidget *parent) : QMainWindow(parent) {
 
 void MyGame::onMapSelected(int mapId) {
     qDebug() << "MyGame received map selection:" << mapId;
+    currentMapId = mapId; // 记录当前地图ID
     switchToBattleScene(mapId);
 }
 
@@ -67,14 +68,54 @@ void MyGame::switchToBattleScene(int mapId) {
     if (battleScene) {
         delete battleScene;
     }
-    battleScene = new BattleScene(this);
+    battleScene = new BattleScene(this, mapId); // 传递地图ID
     
     // 连接返回信号
     connect(battleScene, &BattleScene::returnToMapSelection,
             this, &MyGame::switchToChooseMapScene);
     
+    // 连接游戏结束信号
+    connect(battleScene, &BattleScene::gameOver,
+            this, &MyGame::onGameOver);
+    
     // 切换场景
     currentScene = battleScene;
     view->setScene(battleScene);
     battleScene->startLoop();
+}
+
+void MyGame::onGameOver(const QString& winner) {
+    qDebug() << "MyGame received game over signal, winner:" << winner;
+    switchToGameOverScene(winner);
+}
+
+void MyGame::onRestartBattle() {
+    qDebug() << "MyGame received restart battle signal";
+    switchToBattleScene(currentMapId);
+}
+
+void MyGame::switchToGameOverScene(const QString& winner) {
+    qDebug() << "Switching to game over scene, winner:" << winner;
+    
+    // 停止当前场景的循环
+    if (currentScene) {
+        currentScene->stopLoop();
+    }
+    
+    // 创建游戏结束场景
+    if (gameOverScene) {
+        delete gameOverScene;
+    }
+    gameOverScene = new GameOverScene(this, winner);
+    
+    // 连接信号
+    connect(gameOverScene, &GameOverScene::returnToMapSelection,
+            this, &MyGame::switchToChooseMapScene);
+    connect(gameOverScene, &GameOverScene::restartBattle,
+            this, &MyGame::onRestartBattle);
+    
+    // 切换场景
+    currentScene = gameOverScene;
+    view->setScene(gameOverScene);
+    gameOverScene->startLoop();
 }

@@ -19,7 +19,8 @@ class BattleScene : public Scene {
 Q_OBJECT
 
 public:
-    explicit BattleScene(QObject *parent);
+    explicit BattleScene(QObject *parent, int mapId = 1);
+    ~BattleScene(); // 析构函数，确保正确清理资源
 
     void processInput() override;
 
@@ -56,6 +57,8 @@ private:
     Weapon* findNearestWeapon(const QPointF& pos, qreal distanceThreshold); // 查找附近的武器
     
     bool isWeaponEquipped(Weapon* weapon); // 检查武器是否被装备
+    
+    void checkGameOver(); // 检查游戏是否结束
 
     Map *map;
     Character *character;
@@ -71,6 +74,7 @@ private:
 
 signals:
     void returnToMapSelection();
+    void gameOver(const QString& winner); // 游戏结束信号，传递获胜者名称
 
 };
 
