@@ -6,6 +6,7 @@
 #include <QTimer>
 #include "Character.h"
 #include "../Maps/Map.h"
+#include "../Medicine/Medicine.h"
 #include <QDebug>
 
 Character::Character(QGraphicsItem *parent):Item(parent,"") {
@@ -26,10 +27,16 @@ Character::Character(QGraphicsItem *parent):Item(parent,"") {
 }
 
 Character::~Character() {
+    // 清理宝石
+    if (currentGem) {
+        delete currentGem;
+        currentGem = nullptr;
+    }
+    
     // 清理所有buff和相关定时器
     clearAllBuffs();
     
-    qDebug() << "Character destructor: All buffs and timers cleared";
+    qDebug() << "Character destructor: All buffs, timers, and gems cleared";
 }
 
 
@@ -344,13 +351,30 @@ void Character::setMaxHealth(qreal maxHealth) {
     }
 }
 
-void Character::takeDamage(qreal damage) {
+void Character::takeDamage(qreal damage, const QString& weaponName) {
     if (damage > 0 && isAlive()) {
-        currentHealth -= damage;
+        // 首先应用护盾吸收
+        qreal shieldedDamage = applyShieldDamage(damage, weaponName);
+        
+        // 然后计算武器防护减免（对剩余伤害）
+        qreal protectionMultiplier = getWeaponProtectionMultiplier(weaponName);
+        qreal actualDamage = shieldedDamage * protectionMultiplier;
+        
+        // 如果完全免疫（倍数为0），则不造成伤害
+        if (protectionMultiplier == 0.0 && shieldedDamage > 0) {
+            qDebug() << "Character is immune to" << weaponName << "damage!";
+            return;
+        }
+        
+        currentHealth -= actualDamage;
         if (currentHealth < 0) {
             currentHealth = 0;
         }
-        qDebug() << "Character took" << damage << "damage. Health:" << currentHealth << "/" << maxHealth;
+        
+        qDebug() << "Character took" << actualDamage << "damage from" << weaponName 
+                 << "(original:" << damage << ", after shield:" << shieldedDamage 
+                 << ", protection:" << protectionMultiplier << ")"
+                 << ". Health:" << currentHealth << "/" << maxHealth;
         
         // 触发受击状态
         isBeingHit = true;
@@ -641,6 +665,53 @@ Weapon* Character::unequipWeapon() {
 
 #pragma endregion
 
+#pragma region Gem System
+
+void Character::equipGem(Medicine* gem) {
+    if (!gem) return;
+    
+    // 如果已经有宝石，先卸下并删除旧宝石
+    if (currentGem) {
+        Medicine* oldGem = unequipGem();
+        if (oldGem) {
+            delete oldGem;  // 删除旧宝石
+            qDebug() << "Old gem removed and deleted when equipping new gem";
+        }
+    }
+    
+    // 装备新宝石
+    currentGem = gem;
+    currentGem->setParentItem(this);
+    
+    // 设置宝石的显示位置（在角色右上角）
+    QRectF characterBounds = boundingRect();
+    qreal gemX = characterBounds.width() * 0.8;  // 右侧位置
+    qreal gemY = characterBounds.top() - 10;     // 稍微在角色上方
+    currentGem->setPos(gemX, gemY);
+    
+    // 设置宝石的显示属性
+    currentGem->setVisible(true);
+    currentGem->setZValue(10);  // 确保宝石显示在前面
+    currentGem->setScale(0.5);  // 缩小显示尺寸
+    
+    qDebug() << "Equipped gem:" << gem->getTypeName() << "at position:" << gemX << "," << gemY;
+}
+
+Medicine* Character::unequipGem() {
+    Medicine* oldGem = currentGem;
+    currentGem = nullptr;
+    
+    if (oldGem) {
+        oldGem->setParentItem(nullptr);
+        oldGem->setVisible(false);
+        qDebug() << "Unequipped gem:" << oldGem->getTypeName();
+    }
+    
+    return oldGem;
+}
+
+#pragma endregion
+
 #pragma region Health Bar UI
 
 void Character::setupHealthBar() {
@@ -865,6 +936,100 @@ qreal Character::getCurrentSpeedMultiplier() const {
     }
     
     return totalMultiplier;
+}
+
+qreal Character::getWeaponProtectionMultiplier(const QString& weaponName) const {
+    if (weaponName.isEmpty()) {
+        return 1.0; // 没有指定武器时，正常伤害
+    }
+    
+    qreal totalProtection = 1.0;
+    
+    // 遍历所有激活的增益效果，查找武器防护
+    for (const BuffEffect& buff : activeBuffs.values()) {
+        qreal protection = buff.getWeaponProtection(weaponName);
+        if (protection < totalProtection) {
+            totalProtection = protection; // 取最强的防护效果
+        }
+    }
+    
+    return totalProtection;
+}
+
+qreal Character::applyShieldDamage(qreal damage, const QString& weaponName) {
+    if (weaponName.isEmpty() || damage <= 0) {
+        return damage;
+    }
+    
+    qreal remainingDamage = damage;
+    QStringList buffNamesToRemove;
+    
+    // 遍历所有激活的增益效果，查找有护盾且对该武器有效的buff
+    for (auto it = activeBuffs.begin(); it != activeBuffs.end(); ++it) {
+        BuffEffect& buff = it.value();
+        
+        // 检查这个buff是否对当前武器有防护效果
+        if (buff.weaponProtections.contains(weaponName) && buff.damageShield > 0) {
+            qreal protectionMultiplier = buff.getWeaponProtection(weaponName);
+            
+            // 对于绿宝石护盾，使用特殊逻辑：护盾承受75%伤害，角色承受25%伤害
+            if (buff.name == "绿宝石护盾") {
+                qreal shieldDamage = remainingDamage * 0.75;  // 护盾承受75%伤害
+                qreal characterDamage = remainingDamage * 0.25; // 角色承受25%伤害
+                
+                // 护盾尝试承受75%的伤害
+                qreal unabsorbedShieldDamage = buff.consumeShield(shieldDamage);
+                
+                // 最终角色承受的伤害 = 25%基础伤害 + 护盾无法承受的部分
+                remainingDamage = characterDamage + unabsorbedShieldDamage;
+                
+                qDebug() << "Green gem shield processed. Original damage:" << damage 
+                         << "Shield should absorb 75%:" << shieldDamage
+                         << "Character should take 25%:" << characterDamage
+                         << "Shield actually absorbed:" << (shieldDamage - unabsorbedShieldDamage)
+                         << "Final character damage:" << remainingDamage
+                         << "Remaining shield:" << buff.damageShield << "/" << buff.maxDamageShield;
+            } else {
+                // 原有逻辑：用于蓝宝石等其他防护
+                qreal reducedDamage = remainingDamage * protectionMultiplier;
+                qreal damageToAbsorb = remainingDamage - reducedDamage;
+                qreal unabsorbedDamage = buff.consumeShield(damageToAbsorb);
+                remainingDamage = reducedDamage + unabsorbedDamage;
+                
+                qDebug() << "Shield" << buff.name << "processed damage. Original:" << damage
+                         << "Reduced:" << reducedDamage << "To absorb:" << damageToAbsorb
+                         << "Unabsorbed:" << unabsorbedDamage << "Final:" << remainingDamage
+                         << "Remaining shield:" << buff.damageShield << "/" << buff.maxDamageShield;
+            }
+            
+            // 如果护盾耗尽，标记为需要移除
+            if (buff.isShieldDepleted()) {
+                buffNamesToRemove.append(buff.name);
+                qDebug() << "Shield" << buff.name << "depleted and will be removed";
+            }
+            
+            break; // 一次只使用一个护盾
+        }
+    }
+    
+    // 移除耗尽的护盾buff
+    for (const QString& buffName : buffNamesToRemove) {
+        removeBuff(buffName);
+        
+        // 如果是绿宝石护盾耗尽，也要移除装备的绿宝石
+        if (buffName == "绿宝石护盾" && hasGem()) {
+            Medicine* gem = getCurrentGem();
+            if (gem && gem->getTypeName() == "GemGreen") {
+                Medicine* removedGem = unequipGem();
+                if (removedGem) {
+                    delete removedGem;
+                    qDebug() << "Green gem removed due to shield depletion";
+                }
+            }
+        }
+    }
+    
+    return remainingDamage;
 }
 
 bool Character::hasBuff(const QString& buffName) const {

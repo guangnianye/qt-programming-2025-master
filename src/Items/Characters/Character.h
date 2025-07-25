@@ -17,6 +17,7 @@
 #include "BuffSystem.h"
 
 class Map; // 前向声明
+class Medicine; // 前向声明
 
 class Character : public Item {
 public:
@@ -53,6 +54,22 @@ public:
     // 卸下武器
     Weapon* unequipWeapon();
 
+    // 宝石系统相关方法
+    [[nodiscard]] Medicine* getCurrentGem() const {
+        return currentGem;
+    }
+    
+    // 装备宝石（自动卸下之前的宝石）
+    void equipGem(Medicine* gem);
+    
+    // 卸下宝石
+    Medicine* unequipGem();
+    
+    // 检查是否装备了宝石
+    [[nodiscard]] bool hasGem() const {
+        return currentGem != nullptr;
+    }
+
     [[nodiscard]] bool isPickDown() const;
 
     void setPickDown(bool pickDown);
@@ -74,7 +91,7 @@ public:
     
     void setMaxHealth(qreal maxHealth);
     
-    void takeDamage(qreal damage);
+    void takeDamage(qreal damage, const QString& weaponName = "");
     
     void heal(qreal amount);
     
@@ -136,12 +153,17 @@ public:
     [[nodiscard]] qreal getCurrentSpeedMultiplier() const;
     [[nodiscard]] bool hasBuff(const QString& buffName) const;
     void updateBuffs(qreal deltaTime);
+    
+    // 武器防护相关方法
+    [[nodiscard]] qreal getWeaponProtectionMultiplier(const QString& weaponName) const;
+    qreal applyShieldDamage(qreal damage, const QString& weaponName);
 
     // 不同种类平台方法
     void processPlatformstypes();
   
 protected:
     Weapon *weapon{};  // 当前装备的武器
+    Medicine *currentGem{nullptr};  // 当前装备的宝石
     QPointF velocity{};
 //    QGraphicsEllipseItem *ellipseItem; // for debugging
 

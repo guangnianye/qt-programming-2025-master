@@ -9,7 +9,6 @@
 #include "../Physics/PhysicsConstants.h"
 #include "../Items/Weapons/Fist.h"
 #include "../Items/Weapons/RangedWeapon.h"
-#include "../Items/Mountable.h"
 #include "../Items/PickupManager.h"
 #include "../Items/Medicine/MedicineManager.h"
 #include <QLineF>
@@ -47,7 +46,6 @@ BattleScene::BattleScene(QObject *parent, int mapId, GameMode gameMode) : Scene(
     enemy->equipWeapon(new Fist(enemy));
     
     // 根据游戏模式初始化AI系统
-    pathFinder = nullptr;
     aiController = nullptr;
     aiEnabled = false;
     if (GameModeUtils::needsAI(currentGameMode)) {
@@ -89,10 +87,6 @@ BattleScene::~BattleScene() {
         aiController->setEnabled(false);
         delete aiController;
         aiController = nullptr;
-    }
-    if (pathFinder) {
-        delete pathFinder;
-        pathFinder = nullptr;
     }
     
     // 确保角色对象被正确清理，这会触发Character的析构函数
@@ -280,9 +274,7 @@ void BattleScene::update() {
     Scene::update();
     processPhysics(); // 处理重力物理
     processAttacks(); // 处理攻击逻辑
-    // processWeaponPickup(); // 处理武器拾取逻辑 - 使用统一拾取管理器替代
     processItemPickup(); // 处理物品拾取逻辑（包括武器和药物）
-    // 血量显示现在由角色自己管理，不需要在场景中更新
     checkGameOver(); // 检查游戏是否结束
 }
 
@@ -290,22 +282,24 @@ void BattleScene::processPhysics() {
     // 为所有可装备物品应用重力
     for (QGraphicsItem *item : items()) {
         bool shouldApplyPhysics = false;
-        
-        // 检查Mountable物品（如护甲）
-        if (auto mountable = dynamic_cast<Mountable *>(item)) {
-            if (!mountable->isMounted()) {
-                shouldApplyPhysics = true;
-            }
-        }
         // 检查武器（武器不继承Mountable，但需要重力）
-        else if (auto weapon = dynamic_cast<Weapon *>(item)) {
+        if (auto weapon = dynamic_cast<Weapon *>(item)) {
             if (!isWeaponEquipped(weapon)) {
                 shouldApplyPhysics = true;
             }
         }
-        // 检查药物（药物需要重力）
+        // 检查药物（药物需要重力，但已装备的宝石不需要）
         else if (auto medicine = dynamic_cast<Medicine *>(item)) {
-            shouldApplyPhysics = true;
+            // 检查是否是宝石类型
+            if (medicine->getTypeName() == "GemBlue" || medicine->getTypeName() == "GemGreen") {
+                // 只有未装备的宝石才应用重力
+                if (!isGemEquipped(medicine)) {
+                    shouldApplyPhysics = true;
+                }
+            } else {
+                // 其他药物（如蘑菇等）始终应用重力
+                shouldApplyPhysics = true;
+            }
         }
         // 检查其他可拾取物品
         else if (auto pickable = dynamic_cast<Pickable *>(item)) {
@@ -423,9 +417,10 @@ void BattleScene::processMeleeAttack(Character* attacker, const QString& attacke
                 if (attackRange.intersects(actualTargetBounds)) {
                     // 使用攻击者当前武器的伤害值
                     qreal weaponDamage = attacker->getWeapon()->getDamage();
+                    QString weaponName = attacker->getWeapon()->getWeaponname();
                     
-                    targetCharacter->takeDamage(weaponDamage);
-                    qDebug() << attackerName << "melee attacked character with" << attacker->getWeapon()->getWeaponname() 
+                    targetCharacter->takeDamage(weaponDamage, weaponName);
+                    qDebug() << attackerName << "melee attacked character with" << weaponName 
                             << "! Damage:" << weaponDamage 
                             << "Target health:" << targetCharacter->getCurrentHealth();
                 }
@@ -491,9 +486,6 @@ void BattleScene::processCharacterWeaponPickup(Character* character) {
         // 使用武器管理器处理拾取逻辑
         Weapon* oldWeapon = WeaponManager::handleWeaponPickup(character, nearestWeapon);
         
-        // 注意：不需要手动从场景移除武器，因为setParentItem会自动处理
-        // removeItem(nearestWeapon); // 这行是多余的，会导致武器不显示
-        
         // 如果有被替换的武器，删除它（直接消失）
         if (oldWeapon) {
             delete oldWeapon;
@@ -526,6 +518,12 @@ bool BattleScene::isWeaponEquipped(Weapon* weapon) {
     // 如果武器有父对象（即被角色装备），则认为它已被装备
     // 掉落的武器应该没有父对象或者父对象是场景本身
     return weapon && weapon->parentItem() != nullptr;
+}
+
+bool BattleScene::isGemEquipped(Medicine* gem) {
+    // 如果宝石有父对象（即被角色装备），则认为它已被装备
+    // 掉落的宝石应该没有父对象或者父对象是场景本身
+    return gem && gem->parentItem() != nullptr;
 }
 
 void BattleScene::checkGameOver() {
@@ -562,36 +560,15 @@ void BattleScene::checkGameOver() {
 
 // AI系统方法实现
 void BattleScene::initializeAI() {
-    if (!map) {
-        qWarning() << "BattleScene::initializeAI: Map not initialized";
+    if (!enemy) {
+        qWarning() << "BattleScene::initializeAI: Enemy character not found";
         return;
     }
     
-    // 创建路径寻找器
-    pathFinder = new PathFinder(this);
-    pathFinder->initializeNavigation(map);
-    
     // 创建AI控制器
-    if (enemy) {
-        aiController = new AIController(enemy, this);
-        aiController->initialize(pathFinder);
-        
-        // 配置AI参数
-        aiController->config.enableCombat = true;
-        aiController->config.enableItemCollection = true;
-        aiController->config.updateInterval = 100.0; // 100ms更新间隔
-        aiController->config.arrivalThreshold = 30.0; // 30像素到达阈值
-        aiController->config.searchRadius = 400.0; // 400像素搜索半径
-        aiController->config.combatRange = 120.0; // 120像素战斗范围
-        aiController->config.retreatHealthThreshold = 20.0; // 20血量时撤退
-        
-        // 启用调试（可选）
-        aiController->setDebugEnabled(true);
-        
-        qDebug() << "AI system initialized with" << pathFinder->getNodeCount() << "navigation nodes";
-    } else {
-        qWarning() << "BattleScene::initializeAI: Enemy character not found";
-    }
+    aiController = new AIController(enemy, this);
+    
+    qDebug() << "Simple AI system initialized";
 }
 
 void BattleScene::enableAI(bool enabled) {
@@ -604,34 +581,20 @@ void BattleScene::enableAI(bool enabled) {
     aiController->setEnabled(enabled);
     
     if (enabled) {
-        // AI启用时，让AI开始跟踪玩家
-        if (character) {
-            aiController->setTargetCharacter(character);
-        }
-        qDebug() << "AI enabled - enemy will now use AI pathfinding";
+        qDebug() << "AI enabled";
     } else {
-        // AI禁用时，清除AI目标，恢复手动控制
-        aiController->clearTarget();
-        qDebug() << "AI disabled - enemy returns to manual control";
+        qDebug() << "AI disabled";
     }
 }
 
 void BattleScene::setAITarget(Character* aiCharacter, const QPointF& target) {
-    if (!aiController || aiCharacter != enemy) {
-        return;
-    }
-    
-    aiController->setTargetPosition(target);
-    qDebug() << "AI target position set to" << target;
+    // 简化的AI目标设置 - 暂时不实现
+    qDebug() << "AI target position setting not implemented in simplified version";
 }
 
 void BattleScene::setAITargetCharacter(Character* aiCharacter, Character* target) {
-    if (!aiController || aiCharacter != enemy || !target) {
-        return;
-    }
-    
-    aiController->setTargetCharacter(target);
-    qDebug() << "AI target character set";
+    // 简化的AI目标设置 - 暂时不实现
+    qDebug() << "AI target character setting not implemented in simplified version";
 }
 
 bool BattleScene::isAIEnabled() const {
@@ -649,7 +612,7 @@ void BattleScene::setGameMode(GameMode mode) {
     
     // 根据新模式调整AI状态
     if (GameModeUtils::needsAI(mode)) {
-        if (!pathFinder || !aiController) {
+        if (!aiController) {
             initializeAI();
         }
         enableAI(true);

@@ -10,7 +10,7 @@
 
 // BigLaserBullet 实现
 BigLaserBullet::BigLaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent)
-    : Projectile(startPos, direction, damage, ":/Items/Weapons/Raygun/bullet.png", parent) {
+    : Projectile(startPos, direction, damage, ":/Items/Weapons/Raygun/bullet.png", "raygunbig", parent) {
     
     // 设置大型子弹属性
     setVelocity(direction * BULLET_SPEED);
@@ -25,7 +25,7 @@ BigLaserBullet::BigLaserBullet(const QPointF& startPos, const QPointF& direction
 void BigLaserBullet::onCharacterHit(Character* character) {
     if (character) {
         qDebug() << "BigLaserBullet hit character, dealing" << getDamage() << "damage";
-        character->takeDamage(getDamage());
+        character->takeDamage(getDamage(), "raygunbig");
         cleanup(); // 子弹击中后立即消失
     }
 }

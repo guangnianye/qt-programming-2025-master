@@ -12,7 +12,7 @@
 
 // StoneProjectile 实现
 StoneProjectile::StoneProjectile(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent)
-    : Projectile(startPos, direction, damage, ":/Items/Weapons/ThrowingStone/ThrowingStone_Icon.png", parent)
+    : Projectile(startPos, direction, damage, ":/Items/Weapons/ThrowingStone/ThrowingStone_Icon.png", "throwingstone", parent)
 {
     // 设置受重力影响
     setGravityAffected(true);
@@ -42,7 +42,7 @@ void StoneProjectile::updatePosition() {
 void StoneProjectile::onCharacterHit(Character* character) {
     if (character && character->isAlive()) {
         // 对角色造成伤害
-        character->takeDamage(getDamage());
+        character->takeDamage(getDamage(), "throwingstone");
         qDebug() << "Stone hit character! Damage:" << getDamage() 
                 << "Target health:" << character->getCurrentHealth();
     }

@@ -11,12 +11,13 @@
 #include <QDebug>
 
 Projectile::Projectile(const QPointF& startPos, const QPointF& direction, qreal damage, 
-                      const QString& imagePath, QGraphicsItem *parent)
+                      const QString& imagePath, const QString& weaponName, QGraphicsItem *parent)
     : QObject(nullptr)
     , QGraphicsPixmapItem(parent)
     , flightTimer(new QTimer())
     , position(startPos)
     , damage(damage)
+    , weaponName(weaponName)
     , gravity(PhysicsConstants::GRAVITY_ACCELERATION)
     , gravityAffected(true)
     , timeElapsed(0)
@@ -121,9 +122,9 @@ void Projectile::checkCollisions() {
 
 void Projectile::onCharacterHit(Character* character) {
     if (character && character->isAlive()) {
-        // 对角色造成伤害
-        character->takeDamage(damage);
-        qDebug() << "Projectile hit character! Damage:" << damage 
+        // 对角色造成伤害，传递武器名称
+        character->takeDamage(damage, weaponName);
+        qDebug() << "Projectile from" << weaponName << "hit character! Damage:" << damage 
                 << "Target health:" << character->getCurrentHealth();
     }
     

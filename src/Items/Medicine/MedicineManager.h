@@ -20,6 +20,8 @@ enum class MedicineDropType {
     HealthPotion,    // 健康药水
     EnergyBoost,     // 能量提升
     MagicPotion,     // 魔法药水
+    GemBlue,         // 蓝宝石（武器防护）
+    GemGreen,        // 绿宝石（远程武器护盾）
     // 未来可以添加更多药物类型
 };
 

@@ -17,6 +17,8 @@
         <file>Items/Medicine/full_heart.png</file>
         <file>Items/Medicine/half_heart.png</file>
         <file>Items/Medicine/mushroom.png</file>
+        <file>Items/Medicine/gem_blue.png</file>
+        <file>Items/Medicine/gem_green.png</file>
         <file>Backgrounds/ChooseBattlefieldSceneBackground.png</file>
         <file>Backgrounds/GameOverBackground.png</file>
         <file>Backgrounds/GameModeSelectionSceneBackground.png</file>

@@ -14,7 +14,6 @@
 #include "../Items/Weapons/WeaponManager.h"
 #include "../Items/Medicine/MedicineManager.h"
 #include "../Items/PickupManager.h"
-#include "../AI/PathFinder.h"
 #include "../AI/AIController.h"
 #include "../GameMode.h"
 
@@ -72,6 +71,7 @@ private:
     Weapon* findNearestWeapon(const QPointF& pos, qreal distanceThreshold); // 查找附近的武器
     
     bool isWeaponEquipped(Weapon* weapon); // 检查武器是否被装备
+    bool isGemEquipped(Medicine* gem); // 检查宝石是否被装备
     
     void checkGameOver(); // 检查游戏是否结束
 
@@ -86,7 +86,6 @@ private:
     GameMode currentGameMode; // 当前游戏模式
     
     // AI系统组件
-    PathFinder *pathFinder; // 路径寻找器
     AIController *aiController; // AI控制器（控制enemy角色）
     bool aiEnabled; // AI是否启用
     

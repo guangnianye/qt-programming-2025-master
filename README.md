@@ -8,9 +8,11 @@
 
 ### 🎮 游戏特色
 - 🔥 **实时双人对战**: 支持本地双人对战模式
-- 🤖 **智能AI系统**: 先进的AI寻路和行为系统，支持多层平台导航
+- 🤖 **智能AI系统**: AIController直接角色控制系统，支持所有角色操作
 - ⚔️ **丰富武器系统**: 5种不同类型武器，各具特色
 - 🎯 **动态武器掉落**: 武器从天空随机掉落，增加游戏策略性
+- 💊 **多样化药物系统**: 5种药物类型，包含治疗、增益、防护效果
+- 🛡️ **武器防护机制**: 蓝宝石提供武器特定防护，绿宝石提供护盾系统
 - 🏃‍♂️ **流畅物理引擎**: 重力、碰撞检测、平台跳跃
 
 ## 技术栈
@@ -41,18 +43,16 @@
 ├── src/                    # 源代码目录
 │   ├── main.cpp           # 程序入口点
 │   ├── MyGame.h/cpp       # 主游戏窗口类 (QMainWindow子类)
+│   ├── GameMode.h/cpp     # 游戏模式系统 (PvP/PvE/Single模式定义)
 │   ├── AI/                # AI人工智能系统
-│   │   ├── NavigationNode.h/cpp  # 导航节点类 (A*算法节点)
-│   │   ├── PathFinder.h/cpp      # 路径寻找器 (A*算法实现)
-│   │   └── AIController.h/cpp    # AI控制器 (行为状态机+智能决策)
+│   │   └── AIController.h/cpp    # AI控制器 (直接角色控制系统)
 │   ├── Items/             # 游戏物品系统
 │   │   ├── Item.h/cpp     # 基础物品类 (QGraphicsItem子类)
 │   │   ├── Pickable.h/cpp # 可拾取物品基类 (Item子类)
-│   │   ├── Mountable.h/cpp # 可装备物品基类 (装备系统抽象)
 │   │   ├── PickupManager.h/cpp # 统一拾取管理器 (QObject子类)
 │   │   ├── Characters/    # 角色相关
 │   │   │   ├── Character.h/cpp # 基础角色类 (Item子类)
-│   │   │   ├── BuffSystem.h    # 增益效果系统 (结构体定义)
+│   │   │   ├── BuffSystem.h    # 增益效果系统 (武器防护+伤害护盾)
 │   │   │   └── Green.h/cpp     # Green角色 (Character子类)
 │   │   ├── Weapons/       # 武器系统
 │   │   │   ├── Weapon.h/cpp          # 武器基类 (Item子类)
@@ -70,7 +70,9 @@
 │   │   │   ├── MedicineManager.h/cpp # 药物管理器 (QObject子类)
 │   │   │   ├── HealthPotion.h/cpp    # 健康药水 (Medicine子类)
 │   │   │   ├── MagicPotion.h/cpp     # 魔法药水 (Medicine子类)
-│   │   │   └── EnergyBoost.h/cpp     # 能量增益药水 (Medicine子类)
+│   │   │   ├── EnergyBoost.h/cpp     # 能量增益药水 (Medicine子类)
+│   │   │   ├── GemBlue.h/cpp         # 蓝宝石 (武器防护药物)
+│   │   │   └── GemGreen.h/cpp        # 绿宝石 (护盾药物)
 │   │   └── Maps/          # 地图相关
 │   │       ├── Map.h/cpp             # 地图基类 (Item子类)
 │   │       └── Battlefield.h/cpp     # 战场地图 (Map子类)
@@ -80,6 +82,7 @@
 │       ├── Scene.h/cpp    # 基础场景类 (QGraphicsScene子类)
 │       ├── BattleScene.h/cpp         # 战斗场景 (Scene子类)
 │       ├── ChooseBattlefieldScene.h/cpp # 地图选择场景 (Scene子类)
+│       ├── GameModeSelectionScene.h/cpp # 游戏模式选择场景 (Scene子类)
 │       └── GameOverScene.h/cpp       # 游戏结束场景 (Scene子类)
 ├── assets/                # 游戏资源
 │   ├── assets.qrc        # Qt资源文件
@@ -139,7 +142,9 @@ QGraphicsItem (Qt基类)
         └── Medicine (药物类)
             ├── HealthPotion (健康药水)
             ├── MagicPotion (魔法药水)
-            └── EnergyBoost (能量药水)
+            ├── EnergyBoost (能量药水)
+            ├── GemBlue (蓝宝石防护药物)
+            └── GemGreen (绿宝石护盾药物)
 ```
 
 #### 3. 管理器模式 (Manager Pattern)
@@ -166,9 +171,11 @@ QObject (Qt基类)
 
 ### 已实现功能
 - ✅ **游戏引擎架构**: 基于Qt Graphics Framework的完整游戏引擎
-- ✅ **场景管理系统**: 完整的Scene/BattleScene/ChooseBattlefieldScene/GameOverScene架构
-- ✅ **物品系统框架**: Item/Pickable/Mountable完整继承体系
-- ✅ **角色系统**: Character基类+增益效果(BuffSystem)+血量管理
+- ✅ **场景管理系统**: 完整的Scene/BattleScene/ChooseBattlefieldScene/GameModeSelectionScene/GameOverScene架构
+- ✅ **游戏模式系统**: PvP/PvE/Single模式选择，支持不同游戏体验
+- ✅ **物品系统框架**: Item/Pickable完整继承体系
+- ✅ **角色系统**: Character基类+增益效果(BuffSystem)+血量管理+武器防护系统
+- ✅ **AI控制系统**: AIController直接角色控制，支持所有角色操作
 - ✅ **完整的武器系统**
   - 🎯 **武器分类体系**: 近战武器(MeleeWeapon)/远程武器(RangedWeapon)双分支
   - 🎯 **武器掉落机制**: WeaponManager定时掉落+权重分配系统
@@ -182,7 +189,8 @@ QObject (Qt基类)
   - 💊 **药物拾取系统**: 统一拾取接口+即时效果应用
   - 💊 **即时效果药物**: HealthPotion(+25HP)/MagicPotion(回满血)
   - 💊 **持续性药物**: EnergyBoost(速度+50%+持续回血25秒)
-  - 💊 **增益效果系统**: BuffEffect结构+定时器管理+效果叠加
+  - 💊 **防护性药物**: GemBlue(武器防护)/GemGreen(伤害护盾)
+  - 💊 **增益效果系统**: BuffEffect结构+定时器管理+效果叠加+武器防护
 - ✅ **统一拾取管理系统**
   - 🔄 **PickupManager核心**: 统一处理武器/药物/其他可拾取物品
   - 🔄 **智能距离检测**: 基于PhysicsConstants::PICKUP_DISTANCE的精确检测
@@ -214,8 +222,9 @@ QObject (Qt基类)
 #### 各场景职责分工
 | 场景名称 | 主要职责 | 关键功能 | 输入处理 |
 |---------|---------|---------|---------|
+| **GameModeSelectionScene** | 游戏模式选择 | PvP/PvE/Single模式选择 | 方向键/鼠标选择+Enter确认 |
 | **ChooseBattlefieldScene** | 地图选择 | UI交互+地图预览+选择确认 | 方向键/鼠标选择+Enter确认 |
-| **BattleScene** | 核心战斗 | 双人对战+物理系统+物品管理 | 双玩家独立控制+ESC返回 |
+| **BattleScene** | 核心战斗 | 双人对战+物理系统+物品管理+AI控制 | 双玩家独立控制+AI开关+ESC返回 |
 | **GameOverScene** | 结算显示 | 胜负结果+重玩选项+返回菜单 | R重玩+ESC返回选择 |
 
 ### 🏗️ 物理系统深度解析
@@ -275,11 +284,19 @@ Character (基类) ← Item ← QGraphicsItem
 #### 增益效果系统 (BuffSystem)
 ```cpp
 struct BuffEffect {
-    QString name;             // 增益名称 ("EnergyBoost"等)
+    QString name;             // 增益名称
     qreal speedMultiplier;    // 速度倍数 (1.5 = 150%速度)
     qreal healthRegenRate;    // 血量回复速度 (1.0 HP/秒)
     int duration;             // 持续时间 (25000毫秒)
     int tickInterval;         // 触发间隔 (1000毫秒)
+    QMap<QString, qreal> weaponProtections; // 武器防护映射
+    qreal damageShield;       // 伤害护盾值 (能吸收的总伤害量)
+    qreal maxDamageShield;    // 最大护盾值 (用于显示护盾百分比)
+};
+
+struct WeaponProtection {
+    QString weaponName;       // 武器名称 ("fist", "sword", "raygun"等)
+    qreal damageMultiplier;   // 伤害倍数 (0.0=免疫, 0.5=50%减免, 1.0=正常)
 };
 ```
 
@@ -504,7 +521,64 @@ GameOverScene::restartBattle()
     → MyGame::switchToBattleScene(currentMapId)
 ```
 
-## 武器系统深度解析
+## AI控制系统深度解析
+
+### 🤖 AI系统架构
+
+#### 核心设计理念
+- **直接控制**: AIController直接操控角色，无需复杂寻路算法
+- **简单有效**: 基于QObject的轻量级AI控制器
+- **完整操作**: 支持角色的所有基本操作(移动、跳跃、攻击、拾取)
+- **实时响应**: 可以随时启用/禁用AI控制
+
+#### AI控制器结构
+```cpp
+AIController ← QObject
+├── Character* character      // 控制的角色引用
+├── bool aiEnabled           // AI启用状态
+├── 基本控制接口
+│   ├── moveLeft/moveRight() // 移动控制
+│   ├── jump()              // 跳跃控制
+│   ├── attack()            // 攻击控制
+│   ├── pickup()            // 拾取控制
+│   ├── squat()             // 蹲下控制
+│   └── stopMovement()      // 停止移动
+└── universalAction()       // 通用操作接口
+```
+
+### 🎮 AI控制机制
+
+#### AI控制接口
+- **setEnabled(bool)**: 启用/禁用AI控制
+- **moveLeft/Right()**: 水平移动控制
+- **jump()**: 跳跃操作
+- **attack()**: 攻击操作  
+- **pickup()**: 拾取物品
+- **squat()**: 蹲下操作
+- **stopMovement()**: 停止所有移动
+
+#### 通用操作接口
+```cpp
+void universalAction(bool left, bool right, bool up, bool down, bool attack, bool pickup);
+```
+- 支持同时控制多个操作
+- 布尔参数对应不同的按键状态
+- 可以实现复杂的组合操作
+
+### 🔧 AI系统技术特点
+
+#### 简化设计优势
+- **性能优化**: 无需复杂的A*寻路计算，减少CPU开销
+- **易于扩展**: 可以轻松添加新的AI行为逻辑
+- **调试友好**: 简单的控制流程，便于调试和测试
+- **实时切换**: 可以在游戏中随时开关AI控制
+
+#### 与角色系统集成
+- **无缝控制**: AI控制与玩家控制使用相同的角色接口
+- **状态同步**: AI操作实时反映在角色状态上
+- **权限管理**: AI启用时接管角色控制权
+
+## 药物系统深度解析
 
 ### 🏗️ 武器系统架构
 
@@ -652,9 +726,11 @@ BuffEffect (增益效果结构)
 
 | 药物预览 | 药物名称 | 类型 | 效果值 | 持续时间 | 特殊属性 | 掉落权重 |
 |---------|---------|------|--------|----------|----------|----------|
-| ![HealthPotion](assets/Items/Medicine/half_heart.png) | **HealthPotion** | 治疗 | +25 HP | 即时 | 快速回血 | 50% (10/20) |
+| ![HealthPotion](assets/Items/Medicine/half_heart.png) | **HealthPotion** | 治疗 | +25 HP | 即时 | 快速回血 | 35% (7/20) |
 | ![MagicPotion](assets/Items/Medicine/full_heart.png) | **MagicPotion** | 治疗 | 回满血 | 即时 | 完全恢复 | 10% (2/20) |
-| ![EnergyBoost](assets/Items/Medicine/mushroom.png) | **EnergyBoost** | 增益 | +50%速度 +1HP/秒 | 25秒 | 持续性Buff | 40% (8/20) |
+| ![EnergyBoost](assets/Items/Medicine/mushroom.png) | **EnergyBoost** | 增益 | +50%速度 +1HP/秒 | 25秒 | 持续性Buff | 25% (5/20) |
+| ![GemBlue](assets/Items/Medicine/gem_blue.png) | **GemBlue** | 防护 | 拳头免疫+剑50%减免 | 永久 | 武器防护 | 15% (3/20) |
+| ![GemGreen](assets/Items/Medicine/gem_green.png) | **GemGreen** | 护盾 | 200点伤害护盾 | 直到耗尽 | 对远程武器75%减免 | 15% (3/20) |
 
 ### 🎮 药物系统机制详解
 
@@ -663,9 +739,11 @@ BuffEffect (增益效果结构)
 - **掉落概率**: 70%概率触发掉落 (避免过于频繁)
 - **掉落位置**: 场景上方随机X坐标，固定Y坐标(-100像素)
 - **掉落权重**: 
-  - 健康药水: 50% (10/20) - 最常见
-  - 能量增益: 40% (8/20) - 较常见
-  - 魔法药水: 10% (2/20) - 稀有
+  - 健康药水: 35% (7/20) - 常见
+  - 能量增益: 25% (5/20) - 较常见
+  - 蓝宝石: 15% (3/20) - 稀有防护
+  - 绿宝石: 15% (3/20) - 稀有护盾
+  - 魔法药水: 10% (2/20) - 最稀有
 
 #### 药物效果机制
 ```cpp
@@ -678,13 +756,25 @@ BuffEffect (增益效果结构)
 2. 速度倍数: 1.5倍 (50%速度提升)
 3. 持续回血: 1HP/秒，持续25秒
 4. 自动管理: 效果到期自动移除
+
+// 防护性药物 (蓝宝石)
+1. character->applyBuff(protectionBuff) - 应用武器防护
+2. 拳头攻击: 完全免疫 (0%伤害)
+3. 剑攻击: 50%伤害减免
+4. 永久效果: 直到角色死亡
+
+// 护盾药物 (绿宝石)
+1. character->applyBuff(shieldBuff) - 应用伤害护盾
+2. 护盾容量: 200点伤害
+3. 远程武器防护: 75%伤害减免
+4. 护盾耗尽: 效果自动消失
 ```
 
 #### 药物分类系统
 - **MedicineEffectType::Healing**: 治疗类药物 (直接回复血量)
 - **MedicineEffectType::Buff**: 增益类药物 (提供临时增强效果)
+- **MedicineEffectType::Special**: 特殊效果类药物 (武器防护、伤害护盾)
 - **MedicineEffectType::Debuff**: 减益类药物 (预留，未来可用于毒药)
-- **MedicineEffectType::Special**: 特殊效果类药物 (预留扩展)
 
 ### 📁 药物资源文件路径
 
@@ -694,6 +784,8 @@ BuffEffect (增益效果结构)
 - ![HealthPotion](assets/Items/Medicine/half_heart.png) `:/Items/Medicine/half_heart.png`
 - ![MagicPotion](assets/Items/Medicine/full_heart.png) `:/Items/Medicine/full_heart.png`  
 - ![EnergyBoost](assets/Items/Medicine/mushroom.png) `:/Items/Medicine/mushroom.png`
+- ![GemBlue](assets/Items/Medicine/gem_blue.png) `:/Items/Medicine/gem_blue.png`
+- ![GemGreen](assets/Items/Medicine/gem_green.png) `:/Items/Medicine/gem_green.png`
 
 #### 源代码文件结构
 ```
@@ -702,7 +794,9 @@ src/Items/Medicine/
 ├── MedicineManager.h/cpp # 药物管理器 (QObject子类)
 ├── HealthPotion.h/cpp    # 健康药水实现 (+25HP即时回复)
 ├── MagicPotion.h/cpp     # 魔法药水实现 (回满血即时回复)
-└── EnergyBoost.h/cpp     # 能量药水实现 (含BuffEffect系统)
+├── EnergyBoost.h/cpp     # 能量药水实现 (含BuffEffect系统)
+├── GemBlue.h/cpp         # 蓝宝石实现 (武器防护系统)
+└── GemGreen.h/cpp        # 绿宝石实现 (伤害护盾系统)
 ```
 
 ### 🔧 药物系统技术实现
@@ -813,9 +907,9 @@ QGraphicsItem* getClosestPickableItem() {
 
 ### 游戏素材
 - 角色精灵图 (绿色角色：正面、蹲下、跳跃状态)
-- 地图背景素材 (战场地图、地图选择背景)
+- 地图背景素材 (战场地图、地图选择背景、游戏模式选择背景)
 - 武器贴图资源 (剑、投掷石头、激光枪、大型激光枪)
-- 药物贴图资源 (健康药水、魔法药水、能量增益药水)
+- 药物贴图资源 (健康药水、魔法药水、能量增益药水、蓝宝石、绿宝石)
 - 装备贴图资源 (各类护甲、头部装备、腿部装备)
 
 ## 🎮 游戏玩法
@@ -851,7 +945,7 @@ QGraphicsItem* getClosestPickableItem() {
 
 ### 🎲 游戏机制
 - 🥊 **双人对战模式**: 在战场地图中进行实时PvP战斗
-- 🤖 **智能AI对手**: AI角色具备完整的寻路能力，能够在多层平台间智能移动
+- 🤖 **智能AI对手**: AI角色具备完整的控制能力，能够执行所有角色操作
 - 🎁 **武器掉落系统**: 武器从天空定期掉落，增加战术变数
 - 💊 **药物掉落系统**: 药物从天空随机掉落，提供治疗和增益效果
 - ⚡ **多样化武器**: 不同武器有独特的攻击方式、伤害和射程
@@ -947,9 +1041,10 @@ cmake --build .
 
 ### ✅ 已完成的核心系统
 - 🏗️ **游戏引擎架构**: Qt Graphics Framework + Scene管理
-- 🤖 **完整AI寻路系统**: A*算法路径寻找，智能多层平台导航，支持跳跃/下落/蹲下穿越
+- 🎮 **游戏模式系统**: PvP/PvE/Single模式选择和场景管理
+- 🤖 **AI控制系统**: AIController直接角色控制，支持所有基本操作
 - ⚔️ **完整武器系统**: 5种武器，掉落/拾取/攻击机制完备
-- 💊 **完整药物系统**: 3种药物，治疗/增益效果，Buff系统支持
+- 💊 **完整药物系统**: 5种药物，治疗/增益/防护效果，武器防护+护盾系统
 - 🔄 **统一拾取系统**: PickupManager智能管理所有可拾取物品
 - 🌍 **物理系统**: 重力、碰撞检测、平台跳跃
 - 👥 **双人对战系统**: 本地PvP支持
@@ -959,7 +1054,7 @@ cmake --build .
 #### 🎯 短期计划
 - 🆕 **更多武器类型**: 弓箭、魔法法杖、爆炸性武器
 - 💊 **更多药物类型**: 毒药系统、护盾药水、隐身药水
-- 🤖 **AI策略优化**: 更复杂的战斗策略、团队协作AI、学习型行为
+- 🤖 **AI策略优化**: 智能寻路算法、复杂战斗策略、学习型行为
 - ✨ **特殊效果**: 武器特效、爆炸动画、粒子系统
 - 🎮 **UI优化**: 血量条、弹药显示、Buff状态显示、武器切换动画
 
@@ -969,8 +1064,8 @@ cmake --build .
 - � **音效系统**: 武器音效、背景音乐、环境音
 
 #### 🌟 长期目标
-- 🤖 **AI对手**: 单人模式、智能AI战斗
-- ⚖️ **游戏平衡**: 武器数值调优、战斗节奏
+- 🤖 **智能AI对手**: 高级AI战斗策略、自适应行为系统
+- ⚖️ **游戏平衡**: 武器数值调优、战斗节奏、药物平衡
 - 🏆 **胜负系统**: 计分机制、胜利条件、排行榜
 
 ## 开发者信息

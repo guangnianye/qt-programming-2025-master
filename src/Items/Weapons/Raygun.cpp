@@ -10,7 +10,7 @@
 
 // LaserBullet 实现
 LaserBullet::LaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent)
-    : Projectile(startPos, direction, damage, ":/Items/Weapons/Raygun/bullet.png", parent) {
+    : Projectile(startPos, direction, damage, ":/Items/Weapons/Raygun/bullet.png", "raygun", parent) {
     
     // 设置子弹属性
     setVelocity(direction * BULLET_SPEED);
@@ -25,7 +25,7 @@ LaserBullet::LaserBullet(const QPointF& startPos, const QPointF& direction, qrea
 void LaserBullet::onCharacterHit(Character* character) {
     if (character) {
         qDebug() << "LaserBullet hit character, dealing" << getDamage() << "damage";
-        character->takeDamage(getDamage());
+        character->takeDamage(getDamage(), "raygun");
         cleanup(); // 子弹击中后立即消失
     }
 }

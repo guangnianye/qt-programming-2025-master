@@ -8,6 +8,8 @@
 #include "HealthPotion.h"
 #include "EnergyBoost.h"
 #include "MagicPotion.h"
+#include "GemBlue.h"
+#include "GemGreen.h"
 
 MedicineManager::MedicineManager(QGraphicsScene* scene, QObject* parent)
     : QObject(parent), gameScene(scene), dropTimer(new QTimer(this)),
@@ -61,6 +63,10 @@ Medicine* MedicineManager::createMedicine(MedicineDropType medicineType, QGraphi
             return new EnergyBoost(parent);
         case MedicineDropType::MagicPotion:
             return new MagicPotion(parent);
+        case MedicineDropType::GemBlue:
+            return new GemBlue(parent);
+        case MedicineDropType::GemGreen:
+            return new GemGreen(parent);
         default:
             qDebug() << "Unknown medicine type:" << static_cast<int>(medicineType);
             return nullptr;
@@ -71,18 +77,31 @@ MedicineDropType MedicineManager::getRandomMedicineType() {
     // 使用权重分配系统
     QVector<MedicineDropType> weightedMedicines;
     
-    for (int i = 0; i < 10; ++i) {
+    // 健康药水：权重10（最常见）
+    for (int i = 0; i < 11; ++i) {
         weightedMedicines.append(MedicineDropType::HealthPotion);
     }
 
-    for (int i = 0; i < 8; ++i) {
+    // 能量提升：权重8（较常见）
+    for (int i = 0; i < 10; ++i) {
         weightedMedicines.append(MedicineDropType::EnergyBoost);
     }
 
+    // 魔法药水：权重2（罕见）
     for (int i = 0; i < 2; ++i) {
         weightedMedicines.append(MedicineDropType::MagicPotion);
     }
     
+    // 蓝宝石：权重1（极稀有）
+   for (int i = 0; i < 1; ++i) {
+        weightedMedicines.append(MedicineDropType::GemBlue);
+    }
+    
+    // 绿宝石：权重1（极稀有）
+    for (int i = 0; i < 1; ++i) {
+        weightedMedicines.append(MedicineDropType::GemGreen);
+    }
+
     if (weightedMedicines.isEmpty()) {
         return MedicineDropType::HealthPotion; // 默认返回健康药水
     }

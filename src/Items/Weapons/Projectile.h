@@ -17,7 +17,8 @@ class Projectile : public QObject, public QGraphicsPixmapItem {
     Q_OBJECT
 public:
     explicit Projectile(const QPointF& startPos, const QPointF& direction, qreal damage, 
-                       const QString& imagePath = "", QGraphicsItem *parent = nullptr);
+                       const QString& imagePath = "", const QString& weaponName = "", 
+                       QGraphicsItem *parent = nullptr);
     virtual ~Projectile();
     
     // 开始飞行
@@ -28,6 +29,9 @@ public:
     
     // 获取伤害值
     qreal getDamage() const { return damage; }
+    
+    // 获取武器名称
+    QString getWeaponName() const { return weaponName; }
     
     // 设置速度
     void setVelocity(const QPointF& vel) { velocity = vel; }
@@ -58,6 +62,7 @@ protected:
     QPointF velocity;           // 速度向量
     QPointF position;           // 当前位置
     qreal damage;               // 伤害值
+    QString weaponName;         // 武器名称
     qreal gravity;              // 重力加速度
     bool gravityAffected;       // 是否受重力影响
     int timeElapsed;            // 飞行时间（毫秒）

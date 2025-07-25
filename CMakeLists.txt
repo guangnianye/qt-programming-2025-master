@@ -36,8 +36,6 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Maps/Map.h
         src/Items/Maps/Battlefield.cpp
         src/Items/Maps/Battlefield.h
-        src/Items/Mountable.cpp
-        src/Items/Mountable.h
         src/Items/Weapons/Weapon.cpp
         src/Items/Weapons/Weapon.h
         src/Items/Weapons/Fist.cpp
@@ -70,13 +68,13 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Medicine/EnergyBoost.h
         src/Items/Medicine/MagicPotion.cpp
         src/Items/Medicine/MagicPotion.h
+        src/Items/Medicine/GemBlue.cpp
+        src/Items/Medicine/GemBlue.h
+        src/Items/Medicine/GemGreen.cpp
+        src/Items/Medicine/GemGreen.h
         src/Items/PickupManager.cpp
         src/Items/PickupManager.h
         src/Physics/PhysicsConstants.h
-        src/AI/NavigationNode.cpp
-        src/AI/NavigationNode.h
-        src/AI/PathFinder.cpp
-        src/AI/PathFinder.h
         src/AI/AIController.cpp
         src/AI/AIController.h
         src/GameMode.cpp
