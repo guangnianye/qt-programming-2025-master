@@ -81,10 +81,6 @@
 - **Qt6::Gui** - GUI基础组件(QPixmap, QFont, 事件处理等)  
 - **Qt6::Widgets** - 窗口部件(QMainWindow, QGraphicsView等)
 
-### 标准C++库
-- **STL容器**: QVector, QMap, QString等Qt容器类
-- **智能指针**: 使用原生指针配合Qt父子对象管理
-- **RAII**: 资源获取即初始化，结合Qt对象树管理内存
 
 ## 项目结构
 
