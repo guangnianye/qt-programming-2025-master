@@ -122,7 +122,7 @@ void GameModeSelectionScene::setupModeOptions() {
 
 void GameModeSelectionScene::setupInstructions() {
     // 创建操作说明
-    QString instructions = "↑↓ Select Mode    ENTER Confirm    ESC Return";
+    QString instructions = "↑↓ Select Mode    ENTER Confirm";
     instructionText = new QGraphicsTextItem(instructions);
     instructionText->setFont(getInstructionFont());
     instructionText->setDefaultTextColor(QColor(150, 150, 150));
