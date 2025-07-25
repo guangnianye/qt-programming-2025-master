@@ -6,6 +6,54 @@
 
 这是一个基于 Qt6 和 C++ 开发的2D游戏项目，使用了 Qt Graphics Framework 来构建游戏场景和渲染系统。
 
+## 🖼️ 游戏截图
+
+### 游戏流程展示
+
+<table>
+<tr>
+<td align="center">
+<img src="assets/Screenshots/StartMenu.png" width="400px" alt="开始菜单"/>
+<br>
+<b>开始菜单</b>
+<br>
+游戏启动界面，简洁的设计和Play按钮
+</td>
+<td align="center">
+<img src="assets/Screenshots/GameModeSelection.png" width="400px" alt="游戏模式选择"/>
+<br>
+<b>游戏模式选择</b>
+<br>
+选择PvP、PvE或单人练习模式
+</td>
+</tr>
+<tr>
+<td align="center">
+<img src="assets/Screenshots/ChooseBattlefield.png" width="400px" alt="地图选择"/>
+<br>
+<b>地图选择</b>
+<br>
+选择不同的战斗地图进行游戏
+</td>
+<td align="center">
+<img src="assets/Screenshots/Battle_example_field_4.png" width="400px" alt="战斗场景"/>
+<br>
+<b>战斗场景</b>
+<br>
+实时对战，武器掉落，药物系统
+</td>
+</tr>
+<tr>
+<td colspan="2" align="center">
+<img src="assets/Screenshots/GameOver.png" width="400px" alt="游戏结束"/>
+<br>
+<b>游戏结束</b>
+<br>
+显示胜负结果，提供重玩和返回选项
+</td>
+</tr>
+</table>
+
 ### 🎮 游戏特色
 - 🔥 **实时双人对战**: 支持本地双人对战模式
 - 🤖 **AI控制系统**: 基于AIController的角色控制，支持基本操作
@@ -92,6 +140,12 @@
 │       └── GameOverScene.h/cpp       # 游戏结束场景 (Scene子类)
 ├── assets/                # 游戏资源
 │   ├── assets.qrc        # Qt资源文件
+│   ├── Screenshots/      # 游戏截图
+│   │   ├── StartMenu.png         # 开始菜单截图
+│   │   ├── GameModeSelection.png # 模式选择截图
+│   │   ├── ChooseBattlefield.png # 地图选择截图
+│   │   ├── Battle_example_field_4.png # 战斗场景截图
+│   │   └── GameOver.png          # 游戏结束截图
 │   ├── Backgrounds/      # 背景图片
 │   │   ├── ChooseBattlefieldSceneBackground.png
 │   │   └── GameOverBackground.png
@@ -242,7 +296,37 @@ QObject (Qt基类)
 | **BattleScene** | 核心战斗 | 双人对战+物理系统+物品管理+AI控制 | 双玩家独立控制+AI接口+ESC返回 |
 | **GameOverScene** | 结算显示 | 胜负结果+重玩选项+返回菜单 | R重玩+M地图选择+ESC模式选择+Q开始菜单 |
 
+#### 场景切换流程图
+
+```mermaid
+graph LR
+    A[开始菜单] --> B[模式选择]
+    B --> C[地图选择]
+    C --> D[战斗场景]
+    D --> E[游戏结束]
+    E --> A
+    E --> B
+    E --> C
+    E --> D
+```
+
+#### 场景截图展示
+
+| 开始菜单 | 模式选择 |
+|---------|---------|
+| ![开始菜单](assets/Screenshots/StartMenu.png) | ![模式选择](assets/Screenshots/GameModeSelection.png) |
+
+| 地图选择 | 战斗场景 |
+|---------|---------|
+| ![地图选择](assets/Screenshots/ChooseBattlefield.png) | ![战斗场景](assets/Screenshots/Battle_example_field_4.png) |
+
+| 游戏结束 |
+|---------|
+| ![游戏结束](assets/Screenshots/GameOver.png) |
+
 ### 🎨 开始菜单系统详解
+
+![开始菜单](assets/Screenshots/StartMenu.png)
 
 #### StartMenuScene功能特性
 - **视觉设计**: 深色背景配合游戏标题，营造专业游戏氛围
@@ -1117,6 +1201,9 @@ QGraphicsItem* getClosestPickableItem() {
 
 ## 🎮 游戏玩法
 
+![战斗演示](assets/Screenshots/Battle_example_field_4.png)
+*战斗场景：双角色对战，武器和药物从天空掉落*
+
 ### 🎯 控制方式
 
 #### 玩家1控制
@@ -1142,6 +1229,31 @@ QGraphicsItem* getClosestPickableItem() {
 - **Enter/空格**: 在开始菜单确认开始游戏
 
 ### 🎲 游戏流程
+
+#### 完整游戏流程图
+
+```
+🎮 启动游戏
+    ↓
+📱 开始菜单 (StartMenu.png)
+    ↓ [点击Play]
+🎯 模式选择 (GameModeSelection.png)
+    ↓ [选择PvP/PvE/Single]
+🗺️ 地图选择 (ChooseBattlefield.png)
+    ↓ [选择战斗地图]
+⚔️ 开始战斗 (Battle_example_field_4.png)
+    ↓ [战斗结束]
+🏆 结果显示 (GameOver.png)
+    ↓
+┌─────────────────────────────┐
+│ 可选择的后续操作：            │
+│ • R - 重新战斗               │
+│ • M - 返回地图选择           │
+│ • ESC - 返回模式选择         │
+│ • Q - 返回开始菜单           │
+└─────────────────────────────┘
+```
+
 1. **启动游戏**: 显示开始菜单，点击Play按钮开始
 2. **模式选择**: 选择PvP、PvE或单人练习模式
 3. **地图选择**: 选择战斗地图
