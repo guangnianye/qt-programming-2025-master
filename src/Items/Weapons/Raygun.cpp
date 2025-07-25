@@ -5,12 +5,11 @@
 #include "Raygun.h"
 #include "../Characters/Character.h"
 #include <QGraphicsScene>
-#include <QDebug>
 #include <QtMath>
 
 // LaserBullet 实现
-LaserBullet::LaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent)
-    : Projectile(startPos, direction, damage, ":/Items/Weapons/Raygun/bullet.png", "raygun", parent) {
+LaserBullet::LaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent, Character* shooter)
+    : Projectile(startPos, direction, damage, ":/Items/Weapons/Raygun/bullet.png", "raygun", parent, shooter) {
     
     // 设置子弹属性
     setVelocity(direction * BULLET_SPEED);
@@ -18,13 +17,10 @@ LaserBullet::LaserBullet(const QPointF& startPos, const QPointF& direction, qrea
     
     // 设置子弹大小（比较小的子弹）
     setScale(0.3);
-    
-    qDebug() << "LaserBullet created at" << startPos << "with direction" << direction;
 }
 
 void LaserBullet::onCharacterHit(Character* character) {
     if (character) {
-        qDebug() << "LaserBullet hit character, dealing" << getDamage() << "damage";
         character->takeDamage(getDamage(), "raygun");
         cleanup(); // 子弹击中后立即消失
     }
@@ -43,13 +39,10 @@ Raygun::Raygun(QGraphicsItem *parent)
     
     // 启动计时器
     lastShootTime.start();
-    
-    qDebug() << "Raygun created with" << MAX_BULLETS << "bullets";
 }
 
 void Raygun::attack() {
     if (!canUse() || !canShoot()) {
-        qDebug() << "Cannot shoot: bullets remaining:" << remainingbullet;
         return;
     }
     
@@ -71,14 +64,12 @@ void Raygun::shoot(const QPointF& direction) {
         
         // 消耗一发子弹
         remainingbullet--;
-        qDebug() << "Shot fired! Remaining bullets:" << remainingbullet;
         
         // 记录射击时间
         lastShootTime.restart();
         
         // 如果子弹用完，从角色身上移除武器
         if (remainingbullet <= 0) {
-            qDebug() << "Raygun out of ammo!";
             // 这里可以添加武器用完后的处理逻辑
             // 比如通知角色武器已经用完
         }
@@ -119,7 +110,7 @@ LaserBullet* Raygun::createBullet(const QPointF& direction) {
     }
     
     // 创建子弹
-    LaserBullet* bullet = new LaserBullet(startPos, direction, getDamage());
+    LaserBullet* bullet = new LaserBullet(startPos, direction, getDamage(), nullptr, character);
     bullet->setPos(startPos);
     
     return bullet;

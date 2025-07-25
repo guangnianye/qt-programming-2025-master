@@ -4,7 +4,6 @@
 
 #include "GemGreen.h"
 #include "../Characters/Character.h"
-#include <QDebug>
 
 GemGreen::GemGreen(QGraphicsItem *parent) 
     : Medicine(parent, ":/Items/Medicine/gem_green.png", MedicineEffectType::Special) {
@@ -38,7 +37,6 @@ void GemGreen::applyMedicineEffect(Character* character) {
             } else if (oldGemName == "GemGreen") {
                 character->removeBuff("绿宝石护盾");
             }
-            qDebug() << "Removed old gem:" << oldGemName << "and its effects";
         }
     }
     
@@ -66,7 +64,4 @@ void GemGreen::applyMedicineEffect(Character* character) {
     
     // 应用buff到角色
     character->applyBuff(shieldBuff);
-    
-    qDebug() << "GemGreen applied to character: Shield protection for ranged weapons with" 
-             << SHIELD_CAPACITY << "shield capacity";
 }

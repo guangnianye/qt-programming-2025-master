@@ -8,16 +8,16 @@
 #include <QGraphicsScene>
 #include <QPixmap>
 #include <QtMath>
-#include <QDebug>
 
 Projectile::Projectile(const QPointF& startPos, const QPointF& direction, qreal damage, 
-                      const QString& imagePath, const QString& weaponName, QGraphicsItem *parent)
+                      const QString& imagePath, const QString& weaponName, QGraphicsItem *parent, Character* shooter)
     : QObject(nullptr)
     , QGraphicsPixmapItem(parent)
     , flightTimer(new QTimer())
     , position(startPos)
     , damage(damage)
     , weaponName(weaponName)
+    , shooter(shooter)
     , gravity(PhysicsConstants::GRAVITY_ACCELERATION)
     , gravityAffected(true)
     , timeElapsed(0)
@@ -112,6 +112,10 @@ void Projectile::checkCollisions() {
         if (item != this && item != parentItem()) {
             // 只检测是否撞击到角色
             if (auto character = dynamic_cast<Character*>(item)) {
+                // 检查是否是射击者自己，如果是则跳过
+                if (character == shooter) {
+                    continue;
+                }
                 onCharacterHit(character);
                 return; // 碰撞后立即返回
             }
@@ -124,8 +128,6 @@ void Projectile::onCharacterHit(Character* character) {
     if (character && character->isAlive()) {
         // 对角色造成伤害，传递武器名称
         character->takeDamage(damage, weaponName);
-        qDebug() << "Projectile from" << weaponName << "hit character! Damage:" << damage 
-                << "Target health:" << character->getCurrentHealth();
     }
     
     // 撞击后销毁投射物

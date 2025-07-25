@@ -3,7 +3,6 @@
 //
 
 #include "Fist.h"
-#include <QDebug>
 
 Fist::Fist(QGraphicsItem *parent) 
     : MeleeWeapon(parent, "") {  // 拳头不需要图像资源
@@ -16,8 +15,6 @@ Fist::Fist(QGraphicsItem *parent)
 
 void Fist::attack() {
     // 拳头攻击逻辑
-    qDebug() << "Fist attack! Damage:" << getDamage() << "Range:" << getAttackRange();
-    
     // 这里可以添加拳头特有的攻击效果
     // 比如音效、粒子效果等
 }

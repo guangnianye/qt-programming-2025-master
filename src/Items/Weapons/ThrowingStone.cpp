@@ -8,11 +8,11 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QtMath>
-#include <QDebug>
+
 
 // StoneProjectile 实现
-StoneProjectile::StoneProjectile(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent)
-    : Projectile(startPos, direction, damage, ":/Items/Weapons/ThrowingStone/ThrowingStone_Icon.png", "throwingstone", parent)
+StoneProjectile::StoneProjectile(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent, Character* shooter)
+    : Projectile(startPos, direction, damage, ":/Items/Weapons/ThrowingStone/ThrowingStone_Icon.png", "throwingstone", parent, shooter)
 {
     // 设置受重力影响
     setGravityAffected(true);
@@ -43,8 +43,6 @@ void StoneProjectile::onCharacterHit(Character* character) {
     if (character && character->isAlive()) {
         // 对角色造成伤害
         character->takeDamage(getDamage(), "throwingstone");
-        qDebug() << "Stone hit character! Damage:" << getDamage() 
-                << "Target health:" << character->getCurrentHealth();
     }
     
     // 撞击后销毁石头
@@ -62,7 +60,6 @@ ThrowingStone::ThrowingStone(QGraphicsItem *parent)
 
 void ThrowingStone::attack() {
     if (!canUse()) {
-        qDebug() << "ThrowingStone: No throws remaining!";
         return;
     }
     
@@ -73,7 +70,6 @@ void ThrowingStone::attack() {
 
 void ThrowingStone::throwStone(const QPointF& direction) {
     if (!canUse()) {
-        qDebug() << "ThrowingStone: No throws remaining!";
         return;
     }
     
@@ -93,12 +89,9 @@ void ThrowingStone::performRangedAttack(const QPointF& direction) {
         
         // 减少剩余投掷次数
         remainingbullet--;
-        
-        qDebug() << "ThrowingStone: Remaining throws:" << remainingbullet;
-        
+             
         // 如果用完了，可以在这里添加移除武器的逻辑
         if (remainingbullet <= 0) {
-            qDebug() << "ThrowingStone: Weapon exhausted!";
             // 这里可以添加移除武器的逻辑，比如从角色装备中移除
         }
     }
@@ -108,6 +101,9 @@ StoneProjectile* ThrowingStone::createProjectile(const QPointF& direction) {
     if (!scene()) {
         return nullptr;
     }
+    
+    // 获取角色（射击者）
+    Character* character = qgraphicsitem_cast<Character*>(parentItem());
     
     // 从武器当前位置创建投射物
     QPointF startPos = scenePos();
@@ -120,5 +116,5 @@ StoneProjectile* ThrowingStone::createProjectile(const QPointF& direction) {
         startPos += normalizedDir * 30;  // 在武器前方30像素处开始
     }
     
-    return new StoneProjectile(startPos, direction, getDamage());
+    return new StoneProjectile(startPos, direction, getDamage(), nullptr, character);
 }

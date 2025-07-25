@@ -13,7 +13,7 @@
 class BigLaserBullet : public Projectile {
     Q_OBJECT
 public:
-    explicit BigLaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent = nullptr);
+    explicit BigLaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent = nullptr, Character* shooter = nullptr);
 
 protected:
     // 重写角色碰撞处理

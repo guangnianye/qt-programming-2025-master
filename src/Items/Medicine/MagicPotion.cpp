@@ -4,7 +4,6 @@
 
 #include "MagicPotion.h"
 #include "../Characters/Character.h"
-#include <QDebug>
 
 MagicPotion::MagicPotion(QGraphicsItem *parent)
     : Medicine(parent, ":/Items/Medicine/full_heart.png", MedicineEffectType::Healing) {
@@ -27,7 +26,6 @@ QString MagicPotion::getDescription() const {
 
 void MagicPotion::applyMedicineEffect(Character* character) {
     if (!character) {
-        qDebug() << "MagicPotion: Invalid character pointer";
         return;
     }
     
@@ -40,8 +38,4 @@ void MagicPotion::applyMedicineEffect(Character* character) {
     
     // 回满血
     character->heal(healAmount);
-    
-    qDebug() << "MagicPotion used! Character health restored to full:"
-             << character->getCurrentHealth() << "/" << character->getMaxHealth()
-             << "(healed" << healAmount << "points)";
 }

@@ -2,7 +2,6 @@
 // Created by gerw on 8/20/24.
 //
 
-#include <QDebug>
 #include "BattleScene.h"
 #include "../Items/Characters/Green.h"
 #include "../Items/Maps/Battlefield.h"
@@ -80,7 +79,6 @@ BattleScene::BattleScene(QObject *parent, int mapId, GameMode gameMode) : Scene(
 }
 
 BattleScene::~BattleScene() {
-    qDebug() << "BattleScene destructor called";
     
     // 清理AI系统
     if (aiController) {
@@ -92,14 +90,10 @@ BattleScene::~BattleScene() {
     // 确保角色对象被正确清理，这会触发Character的析构函数
     if (character) {
         character->clearAllBuffs(); // 明确清理buff
-        qDebug() << "Character buffs cleared in BattleScene destructor";
     }
     if (enemy) {
         enemy->clearAllBuffs(); // 明确清理buff
-        qDebug() << "Enemy buffs cleared in BattleScene destructor";
     }
-    
-    qDebug() << "BattleScene destructor completed";
 }
 
 void BattleScene::processInput() {
@@ -178,22 +172,7 @@ void BattleScene::keyPressEvent(QKeyEvent *event) {
             }
             break;
         case Qt::Key_Escape: // 返回地图选择
-            qDebug() << "返回地图选择";
             emit returnToMapSelection();
-            break;
-        case Qt::Key_F1: // 仅在PvE模式下可以启用/禁用AI，在PvP模式下切换到PvE模式
-            if (currentGameMode == GameMode::PvE) {
-                enableAI(!aiEnabled);
-                qDebug() << "AI" << (aiEnabled ? "enabled" : "disabled");
-            } else {
-                qDebug() << "AI controls only available in PvE mode";
-            }
-            break;
-        case Qt::Key_F2: // AI移动到玩家位置 - 仅在PvE模式下有效
-            if (currentGameMode == GameMode::PvE && aiEnabled && character) {
-                setAITargetCharacter(enemy, character);
-                qDebug() << "AI target set to player character";
-            }
             break;
         default:
             Scene::keyPressEvent(event);
@@ -275,6 +254,7 @@ void BattleScene::update() {
     processPhysics(); // 处理重力物理
     processAttacks(); // 处理攻击逻辑
     processItemPickup(); // 处理物品拾取逻辑（包括武器和药物）
+    updateAI(); // 更新AI行为
     checkGameOver(); // 检查游戏是否结束
 }
 
@@ -420,9 +400,6 @@ void BattleScene::processMeleeAttack(Character* attacker, const QString& attacke
                     QString weaponName = attacker->getWeapon()->getWeaponname();
                     
                     targetCharacter->takeDamage(weaponDamage, weaponName);
-                    qDebug() << attackerName << "melee attacked character with" << weaponName 
-                            << "! Damage:" << weaponDamage 
-                            << "Target health:" << targetCharacter->getCurrentHealth();
                 }
             }
         } else {
@@ -438,8 +415,6 @@ void BattleScene::processMeleeAttack(Character* attacker, const QString& attacke
 void BattleScene::processRangedAttack(Character* attacker, const QString& attackerName) {
     // 对于远程武器，主要逻辑由武器系统的投射物处理
     // 这里主要负责记录攻击信息和可能的额外逻辑
-    
-    qDebug() << attackerName << "performed ranged attack with" << attacker->getWeapon()->getWeaponname();
     
     // 检查远程武器是否用完，如果用完则移除
     WeaponManager::removeDepletedRangedWeapon(attacker);
@@ -490,8 +465,6 @@ void BattleScene::processCharacterWeaponPickup(Character* character) {
         if (oldWeapon) {
             delete oldWeapon;
         }
-        
-        qDebug() << "Character picked up weapon:" << nearestWeapon->getWeaponname();
     }
 }
 
@@ -534,11 +507,9 @@ void BattleScene::checkGameOver() {
     QRectF sceneRect = this->sceneRect();
     if (character && character->pos().y() > sceneRect.bottom()) {
         characterAlive = false;
-        qDebug() << "Player fell out of bounds! Game Over.";
     }
     if (enemy && enemy->pos().y() > sceneRect.bottom()) {
         enemyAlive = false;
-        qDebug() << "Enemy fell out of bounds! Game Over.";
     }
     
     // 如果任何一方死亡或掉落，触发游戏结束
@@ -553,7 +524,9 @@ void BattleScene::checkGameOver() {
             winner = ""; // 平局（两者都死亡）
         }
         
-        qDebug() << "Game Over! Winner:" << (winner.isEmpty() ? "Draw" : winner);
+        // 立即停止AI系统和所有相关组件
+        immediateCleanupOnGameOver();
+        
         emit gameOver(winner);
     }
 }
@@ -561,40 +534,39 @@ void BattleScene::checkGameOver() {
 // AI系统方法实现
 void BattleScene::initializeAI() {
     if (!enemy) {
-        qWarning() << "BattleScene::initializeAI: Enemy character not found";
         return;
     }
     
     // 创建AI控制器
     aiController = new AIController(enemy, this);
     
-    qDebug() << "Simple AI system initialized";
+    // 设置地图引用
+    if (map) {
+        aiController->setMap(map);
+    } 
+    
+    // 设置玩家角色作为AI的目标
+    if (character) {
+        aiController->setPlayerTarget(character);
+    } 
 }
 
 void BattleScene::enableAI(bool enabled) {
     if (!aiController) {
-        qWarning() << "BattleScene::enableAI: AI controller not initialized";
         return;
     }
     
     aiEnabled = enabled;
     aiController->setEnabled(enabled);
-    
-    if (enabled) {
-        qDebug() << "AI enabled";
-    } else {
-        qDebug() << "AI disabled";
+}
+
+void BattleScene::updateAI() {
+    if (!isAIEnabled() || !aiController) {
+        return;
     }
-}
-
-void BattleScene::setAITarget(Character* aiCharacter, const QPointF& target) {
-    // 简化的AI目标设置 - 暂时不实现
-    qDebug() << "AI target position setting not implemented in simplified version";
-}
-
-void BattleScene::setAITargetCharacter(Character* aiCharacter, Character* target) {
-    // 简化的AI目标设置 - 暂时不实现
-    qDebug() << "AI target character setting not implemented in simplified version";
+    
+    // 将AI逻辑委托给AI控制器处理
+    aiController->updateAI();
 }
 
 bool BattleScene::isAIEnabled() const {
@@ -606,9 +578,6 @@ void BattleScene::setGameMode(GameMode mode) {
     
     GameMode oldMode = currentGameMode;
     currentGameMode = mode;
-    
-    qDebug() << "Game mode changed from" << GameModeUtils::gameModeToString(oldMode) 
-             << "to" << GameModeUtils::gameModeToString(mode);
     
     // 根据新模式调整AI状态
     if (GameModeUtils::needsAI(mode)) {
@@ -639,4 +608,50 @@ QString BattleScene::getGameModeDisplayText() const {
         default:
             return modeText;
     }
+}
+
+void BattleScene::immediateCleanupOnGameOver() {
+    
+    // 1. 立即停止并清理AI系统
+    if (aiController) {
+        aiController->setEnabled(false);
+        aiController->stopPathing(); // 停止寻路
+        // 注意：不在这里删除aiController，会在析构函数中处理
+    }
+    
+    // 2. 清理角色的所有buff和定时器
+    if (character) {
+        character->clearAllBuffs();
+        // 停止角色的所有动作
+        character->setLeftDown(false);
+        character->setRightDown(false);
+        character->setUpDown(false);
+        character->setSquatting(false);
+        character->setAttacking(false);
+        character->setPickDown(false);
+    }
+    
+    if (enemy) {
+        enemy->clearAllBuffs();
+        // 停止敌人的所有动作
+        enemy->setLeftDown(false);
+        enemy->setRightDown(false);
+        enemy->setUpDown(false);
+        enemy->setSquatting(false);
+        enemy->setAttacking(false);
+        enemy->setPickDown(false);
+    }
+    
+    // 3. 停止武器管理器
+    if (weaponManager) {
+        weaponManager->stopWeaponDrops();
+    }
+    
+    // 4. 停止药物管理器
+    if (medicineManager) {
+        medicineManager->stopMedicineDrops();
+    }
+    
+    // 5. 停止场景更新循环（但不删除对象，避免在信号处理中出现问题）
+    // 这将在MyGame切换场景时自动处理
 }

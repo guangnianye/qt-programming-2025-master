@@ -4,7 +4,6 @@
 
 #include "HealthPotion.h"
 #include "../Characters/Character.h"
-#include <QDebug>
 
 HealthPotion::HealthPotion(QGraphicsItem *parent)
     : Medicine(parent, ":/Items/Medicine/half_heart.png", MedicineEffectType::Healing) {
@@ -26,7 +25,6 @@ QString HealthPotion::getDescription() const {
 
 void HealthPotion::applyMedicineEffect(Character* character) {
     if (!character) {
-        qDebug() << "HealthPotion: Invalid character pointer";
         return;
     }
     
@@ -34,7 +32,4 @@ void HealthPotion::applyMedicineEffect(Character* character) {
     qreal healedAmount = character->getCurrentHealth();
     character->heal(HEALING_AMOUNT);
     healedAmount = character->getCurrentHealth() - healedAmount;
-    
-    qDebug() << "HealthPotion used! Character healed" << healedAmount << "points."
-             << "Current health:" << character->getCurrentHealth() << "/" << character->getMaxHealth();
 }

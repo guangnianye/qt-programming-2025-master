@@ -3,7 +3,6 @@
 //
 
 #include "RangedWeapon.h"
-#include <QDebug>
 #include <QtMath>
 
 RangedWeapon::RangedWeapon(QGraphicsItem *parent, const QString &pixmapPath)
@@ -32,11 +31,6 @@ void RangedWeapon::attack(const QPointF& targetPosition) {
 }
 
 void RangedWeapon::performRangedAttack(const QPointF& direction) {
-    // 简单的远程攻击逻辑
-    qDebug() << "Ranged attack executed!"
-             << "Damage:" << getDamage()
-             << "Direction:" << direction;
-    
     // 这里可以添加远程攻击的特效
     // 比如发射弹道、音效等
 }

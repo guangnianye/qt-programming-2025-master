@@ -68,7 +68,6 @@ Medicine* MedicineManager::createMedicine(MedicineDropType medicineType, QGraphi
         case MedicineDropType::GemGreen:
             return new GemGreen(parent);
         default:
-            qDebug() << "Unknown medicine type:" << static_cast<int>(medicineType);
             return nullptr;
     }
 }
@@ -149,8 +148,6 @@ void MedicineManager::dropRandomMedicine() {
     MedicineDropType medicineType = getRandomMedicineType();
     QPointF dropPosition = getRandomDropPosition();
     dropMedicine(medicineType, dropPosition);
-    
-    qDebug() << "Dropped medicine at position:" << dropPosition;
 }
 
 QPointF MedicineManager::getRandomDropPosition() const {

@@ -4,7 +4,6 @@
 
 #include "ChooseBattlefieldScene.h"
 #include "BattleScene.h"
-#include <QDebug>
 #include <QGraphicsSceneMouseEvent>
 #include <QFont>
 #include <QFontInfo>
@@ -29,11 +28,9 @@ ChooseBattlefieldScene::ChooseBattlefieldScene(QObject *parent) : Scene(parent) 
         backgroundImage = new QGraphicsPixmapItem(backgroundPixmap);
         backgroundImage->setPos(0, 0);
         addItem(backgroundImage);
-        qDebug() << "背景图片加载成功，尺寸:" << backgroundPixmap.size();
     } else {
         // 如果图片加载失败，使用纯色背景作为备用
         setBackgroundBrush(QBrush(QColor(240, 248, 255)));
-        qDebug() << "背景图片加载失败，使用纯色背景";
     }
     
     // 初始化选中索引
@@ -42,8 +39,6 @@ ChooseBattlefieldScene::ChooseBattlefieldScene(QObject *parent) : Scene(parent) 
     // 打印可用的字体信息
     QFontDatabase fontDb;
     QStringList fontFamilies = fontDb.families();
-    qDebug() << "系统可用字体数量:" << fontFamilies.size();
-    qDebug() << "部分可用字体:" << fontFamilies.mid(0, qMin(10, fontFamilies.size()));
     
     // 初始化UI
     setupUI();
@@ -202,7 +197,6 @@ void ChooseBattlefieldScene::update() {
 void ChooseBattlefieldScene::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
         case Qt::Key_Escape:
-            qDebug() << "按ESC返回游戏模式选择";
             emit returnToModeSelection();
             break;
         case Qt::Key_Left:
@@ -296,9 +290,7 @@ void ChooseBattlefieldScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     Scene::mouseMoveEvent(event);
 }
 
-void ChooseBattlefieldScene::handleMapSelection(int mapId) {
-    qDebug() << "选择了地图:" << mapId;
-    
+void ChooseBattlefieldScene::handleMapSelection(int mapId) {   
     // 发送信号
     emit mapSelected(mapId);
     
@@ -306,9 +298,7 @@ void ChooseBattlefieldScene::handleMapSelection(int mapId) {
     startBattle(mapId);
 }
 
-void ChooseBattlefieldScene::startBattle(int mapId) {
-    qDebug() << "开始战斗，地图ID:" << mapId;
-    
+void ChooseBattlefieldScene::startBattle(int mapId) {   
     // 这里可以添加切换到战斗场景的逻辑
     // 比如创建BattleScene实例并传递mapId
 }

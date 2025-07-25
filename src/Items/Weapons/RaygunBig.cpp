@@ -5,12 +5,11 @@
 #include "RaygunBig.h"
 #include "../Characters/Character.h"
 #include <QGraphicsScene>
-#include <QDebug>
 #include <QtMath>
 
 // BigLaserBullet 实现
-BigLaserBullet::BigLaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent)
-    : Projectile(startPos, direction, damage, ":/Items/Weapons/Raygun/bullet.png", "raygunbig", parent) {
+BigLaserBullet::BigLaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent, Character* shooter)
+    : Projectile(startPos, direction, damage, ":/Items/Weapons/Raygun/bullet.png", "raygunbig", parent, shooter) {
     
     // 设置大型子弹属性
     setVelocity(direction * BULLET_SPEED);
@@ -18,13 +17,10 @@ BigLaserBullet::BigLaserBullet(const QPointF& startPos, const QPointF& direction
     
     // 设置子弹大小（比普通子弹大）
     setScale(0.6);
-    
-    qDebug() << "BigLaserBullet created at" << startPos << "with direction" << direction << "damage:" << damage;
 }
 
 void BigLaserBullet::onCharacterHit(Character* character) {
     if (character) {
-        qDebug() << "BigLaserBullet hit character, dealing" << getDamage() << "damage";
         character->takeDamage(getDamage(), "raygunbig");
         cleanup(); // 子弹击中后立即消失
     }
@@ -43,14 +39,10 @@ RaygunBig::RaygunBig(QGraphicsItem *parent)
     
     // 启动计时器
     lastShootTime.start();
-    
-    qDebug() << "RaygunBig created with" << MAX_BULLETS << "bullets, damage:" << HIGH_DAMAGE;
 }
 
 void RaygunBig::attack() {
     if (!canUse() || !canShoot()) {
-        qDebug() << "Cannot shoot RaygunBig: bullets remaining:" << remainingbullet 
-                 << "time since last shot:" << lastShootTime.elapsed();
         return;
     }
     
@@ -72,14 +64,12 @@ void RaygunBig::shoot(const QPointF& direction) {
         
         // 消耗一发子弹
         remainingbullet--;
-        qDebug() << "Big shot fired! Remaining bullets:" << remainingbullet;
         
         // 记录射击时间
         lastShootTime.restart();
         
         // 如果子弹用完，从角色身上移除武器
         if (remainingbullet <= 0) {
-            qDebug() << "RaygunBig out of ammo!";
             // 这里可以添加武器用完后的处理逻辑
         }
     }
@@ -119,7 +109,7 @@ BigLaserBullet* RaygunBig::createBigBullet(const QPointF& direction) {
     }
     
     // 创建大型子弹
-    BigLaserBullet* bullet = new BigLaserBullet(startPos, direction, getDamage());
+    BigLaserBullet* bullet = new BigLaserBullet(startPos, direction, getDamage(), nullptr, character);
     bullet->setPos(startPos);
     
     return bullet;

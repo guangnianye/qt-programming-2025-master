@@ -4,7 +4,6 @@
 
 #include "EnergyBoost.h"
 #include "../Characters/Character.h"
-#include <QDebug>
 
 EnergyBoost::EnergyBoost(QGraphicsItem *parent)
     : Medicine(parent, ":/Items/Medicine/mushroom.png", MedicineEffectType::Buff) {
@@ -32,7 +31,6 @@ QString EnergyBoost::getDescription() const {
 
 void EnergyBoost::applyMedicineEffect(Character* character) {
     if (!character) {
-        qDebug() << "EnergyBoost: Invalid character pointer";
         return;
     }
     
@@ -47,9 +45,4 @@ void EnergyBoost::applyMedicineEffect(Character* character) {
     
     // 应用增益效果到角色
     character->applyBuff(energyBuff);
-    
-    qDebug() << "EnergyBoost used! Character gained:"
-             << "Speed boost +" << ((SPEED_BOOST_MULTIPLIER - 1.0) * 100) << "%"
-             << "Health regen" << HEALTH_REGEN_PER_TICK << "HP/sec"
-             << "Duration:" << (EFFECT_DURATION / 1000) << "seconds";
 }

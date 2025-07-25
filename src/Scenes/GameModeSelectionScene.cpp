@@ -3,7 +3,6 @@
 //
 
 #include "GameModeSelectionScene.h"
-#include <QDebug>
 #include <QBrush>
 #include <QPen>
 
@@ -25,12 +24,9 @@ GameModeSelectionScene::GameModeSelectionScene(QObject *parent)
     // 设置闪烁定时器
     connect(blinkTimer, &QTimer::timeout, this, &GameModeSelectionScene::updateSelection);
     blinkTimer->start(500); // 每500ms闪烁一次
-    
-    qDebug() << "GameModeSelectionScene initialized";
 }
 
 GameModeSelectionScene::~GameModeSelectionScene() {
-    qDebug() << "GameModeSelectionScene destroyed";
 }
 
 void GameModeSelectionScene::initializeUI() {
@@ -192,15 +188,12 @@ void GameModeSelectionScene::handleSelectionChange(int direction) {
         // 重置闪烁
         blinkCounter = 0;
         blinkState = true;
-        
-        qDebug() << "Mode selection changed to:" << GameModeUtils::gameModeToString(modeOptions[currentSelection].mode);
     }
 }
 
 void GameModeSelectionScene::handleModeSelection() {
     if (currentSelection >= 0 && currentSelection < modeOptions.size()) {
         GameMode selectedMode = modeOptions[currentSelection].mode;
-        qDebug() << "Game mode selected:" << GameModeUtils::gameModeToString(selectedMode);
         emit gameModeSelected(selectedMode);
     }
 }

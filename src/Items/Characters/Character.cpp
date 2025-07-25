@@ -7,7 +7,6 @@
 #include "Character.h"
 #include "../Maps/Map.h"
 #include "../Medicine/Medicine.h"
-#include <QDebug>
 
 Character::Character(QGraphicsItem *parent):Item(parent,"") {
 //    ellipseItem = new QGraphicsEllipseItem(-5, -5, 10, 10, this);
@@ -35,8 +34,6 @@ Character::~Character() {
     
     // 清理所有buff和相关定时器
     clearAllBuffs();
-    
-    qDebug() << "Character destructor: All buffs, timers, and gems cleared";
 }
 
 
@@ -87,7 +84,6 @@ void Character::processAttack() {
             updatePixmapItem("normal");
             // 恢复正常状态时保持当前方向
             setDirection(directionRight);
-            qDebug() << "Attack recovery finished";
         }
     }
     
@@ -139,7 +135,6 @@ void Character::processHitState() {
             updatePixmapItem("normal");
             // 恢复正常状态时保持当前方向
             setDirection(directionRight);
-            qDebug() << "Hit recovery finished";
         }
     }
 }
@@ -362,7 +357,6 @@ void Character::takeDamage(qreal damage, const QString& weaponName) {
         
         // 如果完全免疫（倍数为0），则不造成伤害
         if (protectionMultiplier == 0.0 && shieldedDamage > 0) {
-            qDebug() << "Character is immune to" << weaponName << "damage!";
             return;
         }
         
@@ -370,11 +364,6 @@ void Character::takeDamage(qreal damage, const QString& weaponName) {
         if (currentHealth < 0) {
             currentHealth = 0;
         }
-        
-        qDebug() << "Character took" << actualDamage << "damage from" << weaponName 
-                 << "(original:" << damage << ", after shield:" << shieldedDamage 
-                 << ", protection:" << protectionMultiplier << ")"
-                 << ". Health:" << currentHealth << "/" << maxHealth;
         
         // 触发受击状态
         isBeingHit = true;
@@ -388,8 +377,8 @@ void Character::takeDamage(qreal damage, const QString& weaponName) {
         
         // 如果血量归零，角色死亡
         if (!isAlive()) {
-            qDebug() << "Character died!";
-            // 这里可以添加死亡效果
+            // 立即停止角色的所有活动
+            handleCharacterDeath();
         }
     }
 }
@@ -400,7 +389,6 @@ void Character::heal(qreal amount) {
         if (currentHealth > maxHealth) {
             currentHealth = maxHealth;
         }
-        qDebug() << "Character healed" << amount << "points. Health:" << currentHealth << "/" << maxHealth;
         
         // 更新血量条显示
         updateHealthBar();
@@ -447,7 +435,6 @@ void Character::checkWallCollisions(const QVector<Wall>& walls) {
     for (const Wall& wall : walls) {
         if (wall.containsPoint(characterPos)) {
             // 如果角色与墙碰撞，处理碰撞
-            qDebug() << "Character collided with wall at:" << wall.rect << "Character position:" << characterPos;
             if (directionRight) {
                 setPos(wall.rect.left(), pos().y());
             } else {
@@ -506,7 +493,6 @@ void Character::processPlatformstypes() {
         if (hasBuff("Poison Damage") && (!platform || platform->type != Platform::Type::Poison)) {
             // 角色离开了毒平台，移除毒素debuff
             removeBuff("Poison Damage");
-            qDebug() << "Character left poison platform! Poison effect removed.";
         }
         
         if (platform) {
@@ -521,7 +507,6 @@ void Character::processPlatformstypes() {
                     if (isSquatting()){
                         // 如果蹲下，设置半透明效果
                         pixmapItem->setOpacity(0.5); // 半透明
-                        qDebug() << "Character is squatting on grass, setting opacity to 0.5";
                     }else {
                         pixmapItem->setOpacity(1.0); // 恢复不透明度
                     }
@@ -532,7 +517,7 @@ void Character::processPlatformstypes() {
                     // 速度加快
                     pixmapItem->setOpacity(1.0); // 恢复不透明度
                     velocity.setX(velocity.x() * PhysicsConstants::ICE_FRICTION);
-                    jumpSpeed *=1.01; // 冰面跳跃速度加倍
+                    jumpSpeed =1.2* PhysicsConstants::JUMP_SPEED; // 冰面跳跃速度加倍
                     break;
                 case Platform::Type::Poison:
                     // 毒平台逻辑
@@ -549,7 +534,6 @@ void Character::processPlatformstypes() {
                             1000                // 触发间隔（1000ms = 1秒）
                         );
                         applyBuff(poisonDebuff);
-                        qDebug() << "Character stepped on poison platform! Taking 2 damage per second.";
                     }
                     break;
                 default:
@@ -601,14 +585,8 @@ void Character::updatePixmapItem(const QString& condition) {
                 } else {
                     pixmapItem = new QGraphicsPixmapItem(pixmap, this);
                 }
-            } else {
-                qDebug() << "Failed to load pixmap from path:" << pixmapPath;
-            }
-        } else {
-            qDebug() << "No pixmap path found for condition:" << condition;
-        }
-    } else {
-        qDebug() << "Condition not found in characterPixmapPaths:" << condition;
+            } 
+        } 
     }
 }
 
@@ -675,7 +653,6 @@ void Character::equipGem(Medicine* gem) {
         Medicine* oldGem = unequipGem();
         if (oldGem) {
             delete oldGem;  // 删除旧宝石
-            qDebug() << "Old gem removed and deleted when equipping new gem";
         }
     }
     
@@ -693,8 +670,6 @@ void Character::equipGem(Medicine* gem) {
     currentGem->setVisible(true);
     currentGem->setZValue(10);  // 确保宝石显示在前面
     currentGem->setScale(0.5);  // 缩小显示尺寸
-    
-    qDebug() << "Equipped gem:" << gem->getTypeName() << "at position:" << gemX << "," << gemY;
 }
 
 Medicine* Character::unequipGem() {
@@ -704,7 +679,6 @@ Medicine* Character::unequipGem() {
     if (oldGem) {
         oldGem->setParentItem(nullptr);
         oldGem->setVisible(false);
-        qDebug() << "Unequipped gem:" << oldGem->getTypeName();
     }
     
     return oldGem;
@@ -867,11 +841,6 @@ void Character::applyBuff(const BuffEffect& buff) {
         buffTickTimers[buff.name] = tickTimer;
         tickTimer->start();
     }
-    
-    qDebug() << "Applied buff:" << buff.name 
-             << "Speed multiplier:" << buff.speedMultiplier
-             << "Health regen:" << buff.healthRegenRate << "/sec"
-             << "Duration:" << buff.duration << "ms";
 }
 
 void Character::removeBuff(const QString& buffName) {
@@ -897,13 +866,9 @@ void Character::removeBuff(const QString& buffName) {
         }
         buffTickTimers.remove(buffName);
     }
-    
-    qDebug() << "Removed buff:" << buffName;
 }
 
-void Character::clearAllBuffs() {
-    qDebug() << "Clearing all buffs and timers...";
-    
+void Character::clearAllBuffs() { 
     // 停止并删除所有持续时间定时器
     for (auto it = buffTimers.begin(); it != buffTimers.end(); ++it) {
         if (it.value()) {
@@ -924,8 +889,6 @@ void Character::clearAllBuffs() {
     
     // 清理增益效果
     activeBuffs.clear();
-    
-    qDebug() << "All buffs and timers cleared successfully";
 }
 
 qreal Character::getCurrentSpeedMultiplier() const {
@@ -982,30 +945,17 @@ qreal Character::applyShieldDamage(qreal damage, const QString& weaponName) {
                 
                 // 最终角色承受的伤害 = 25%基础伤害 + 护盾无法承受的部分
                 remainingDamage = characterDamage + unabsorbedShieldDamage;
-                
-                qDebug() << "Green gem shield processed. Original damage:" << damage 
-                         << "Shield should absorb 75%:" << shieldDamage
-                         << "Character should take 25%:" << characterDamage
-                         << "Shield actually absorbed:" << (shieldDamage - unabsorbedShieldDamage)
-                         << "Final character damage:" << remainingDamage
-                         << "Remaining shield:" << buff.damageShield << "/" << buff.maxDamageShield;
             } else {
                 // 原有逻辑：用于蓝宝石等其他防护
                 qreal reducedDamage = remainingDamage * protectionMultiplier;
                 qreal damageToAbsorb = remainingDamage - reducedDamage;
                 qreal unabsorbedDamage = buff.consumeShield(damageToAbsorb);
                 remainingDamage = reducedDamage + unabsorbedDamage;
-                
-                qDebug() << "Shield" << buff.name << "processed damage. Original:" << damage
-                         << "Reduced:" << reducedDamage << "To absorb:" << damageToAbsorb
-                         << "Unabsorbed:" << unabsorbedDamage << "Final:" << remainingDamage
-                         << "Remaining shield:" << buff.damageShield << "/" << buff.maxDamageShield;
             }
             
             // 如果护盾耗尽，标记为需要移除
             if (buff.isShieldDepleted()) {
                 buffNamesToRemove.append(buff.name);
-                qDebug() << "Shield" << buff.name << "depleted and will be removed";
             }
             
             break; // 一次只使用一个护盾
@@ -1023,7 +973,6 @@ qreal Character::applyShieldDamage(qreal damage, const QString& weaponName) {
                 Medicine* removedGem = unequipGem();
                 if (removedGem) {
                     delete removedGem;
-                    qDebug() << "Green gem removed due to shield depletion";
                 }
             }
         }
@@ -1040,6 +989,32 @@ void Character::updateBuffs(qreal deltaTime) {
     // 目前定时器系统自动处理增益更新
     // 这个方法保留用于未来可能的手动更新需求
     Q_UNUSED(deltaTime)
+}
+
+void Character::handleCharacterDeath() {  
+    // 1. 停止所有输入动作
+    setLeftDown(false);
+    setRightDown(false);
+    setUpDown(false);
+    setSquatting(false);
+    setAttacking(false);
+    setPickDown(false);
+    
+    // 2. 清理所有buff和定时器
+    clearAllBuffs();
+    
+    // 3. 停止所有攻击动作
+    isPerformingAttack = false;
+    attackTimer = 0;
+    attackIntervalTimer = 0;
+    attackRecoveryTimer = 0;
+    
+    // 4. 停止受击状态
+    isBeingHit = false;
+    hitRecoveryTimer = 0;
+    
+    // 5. 停止velocity，让角色不再移动
+    velocity = QPointF(0, 0);
 }
 
 #pragma endregion

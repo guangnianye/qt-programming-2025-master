@@ -12,7 +12,7 @@
 class StoneProjectile : public Projectile {
     Q_OBJECT
 public:
-    explicit StoneProjectile(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent = nullptr);
+    explicit StoneProjectile(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent = nullptr, Character* shooter = nullptr);
 
 protected:
     // 重写更新位置方法，实现抛物线运动

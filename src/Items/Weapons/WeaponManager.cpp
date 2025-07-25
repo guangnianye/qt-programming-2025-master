@@ -10,7 +10,6 @@
 #include "RaygunBig.h"
 #include "RangedWeapon.h"
 #include "Fist.h"
-#include <QDebug>
 
 WeaponManager::WeaponManager(QGraphicsScene* scene, QObject* parent)
     : QObject(parent), gameScene(scene), dropInterval(DEFAULT_DROP_INTERVAL) {
@@ -26,8 +25,6 @@ WeaponManager::WeaponManager(QGraphicsScene* scene, QObject* parent)
                          gameScene->sceneRect().width(), 
                          50); // 掉落带高度
     }
-    
-    qDebug() << "WeaponManager created with drop interval:" << dropInterval << "ms";
 }
 
 WeaponManager::~WeaponManager() {
@@ -37,14 +34,12 @@ WeaponManager::~WeaponManager() {
 void WeaponManager::startWeaponDrops() {
     if (dropTimer && !dropTimer->isActive()) {
         dropTimer->start(dropInterval);
-        qDebug() << "Weapon drops started with interval:" << dropInterval << "ms";
     }
 }
 
 void WeaponManager::stopWeaponDrops() {
     if (dropTimer && dropTimer->isActive()) {
         dropTimer->stop();
-        qDebug() << "Weapon drops stopped";
     }
 }
 
@@ -59,8 +54,6 @@ void WeaponManager::dropWeapon(WeaponDropType weaponType, const QPointF& positio
         // 设置位置并添加到场景
         weapon->setPos(position);
         gameScene->addItem(weapon);
-        
-        qDebug() << "Dropped weapon" << weapon->getWeaponname() << "at position" << position;
     }
 }
 
@@ -84,7 +77,6 @@ Weapon* WeaponManager::createWeapon(WeaponDropType weaponType, QGraphicsItem* pa
         case WeaponDropType::RaygunBig:
             return new RaygunBig(parent);
         default:
-            qDebug() << "Unknown weapon type, creating Sword as default";
             return new Sword(parent);
     }
 }
@@ -119,7 +111,6 @@ Weapon* WeaponManager::handleWeaponPickup(Character* character, Weapon* newWeapo
     if (!oldWeapon || dynamic_cast<Fist*>(oldWeapon)) {
         // 直接装备新武器
         character->equipWeapon(newWeapon);
-        qDebug() << "Character equipped" << newWeapon->getWeaponname();
         return nullptr; // 没有被替换的武器
     } else {
         // 角色已有武器，需要替换
@@ -127,10 +118,6 @@ Weapon* WeaponManager::handleWeaponPickup(Character* character, Weapon* newWeapo
         
         // 装备新武器
         character->equipWeapon(newWeapon);
-        
-        qDebug() << "Character replaced" << oldWeapon->getWeaponname() 
-                 << "with" << newWeapon->getWeaponname();
-        
         // 返回被替换的武器（调用者需要决定如何处理，通常是删除）
         return oldWeapon;
     }
@@ -149,7 +136,6 @@ void WeaponManager::removeDepletedRangedWeapon(Character* character) {
     // 检查是否是用完的远程武器
     RangedWeapon* rangedWeapon = dynamic_cast<RangedWeapon*>(weapon);
     if (rangedWeapon && !rangedWeapon->canUse()) {
-        qDebug() << "Removing depleted ranged weapon:" << weapon->getWeaponname();
         
         // 卸下武器
         character->unequipWeapon();
@@ -160,8 +146,6 @@ void WeaponManager::removeDepletedRangedWeapon(Character* character) {
         
         // 删除用完的武器
         delete weapon;
-        
-        qDebug() << "Character now has Fist as default weapon";
     }
 }
 

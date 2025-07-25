@@ -165,7 +165,6 @@ protected:
     Weapon *weapon{};  // 当前装备的武器
     Medicine *currentGem{nullptr};  // 当前装备的宝石
     QPointF velocity{};
-//    QGraphicsEllipseItem *ellipseItem; // for debugging
 
     // 重力系统相关属性
     bool onGround{true};                                      // 是否在地面上
@@ -207,6 +206,9 @@ private:
     QMap<QString, BuffEffect> activeBuffs;     // 当前激活的增益效果
     QMap<QString, QTimer*> buffTimers;         // 增益持续时间定时器
     QMap<QString, QTimer*> buffTickTimers;     // 增益触发定时器（用于持续性效果）
+    
+    // 死亡处理
+    void handleCharacterDeath();               // 处理角色死亡时的清理工作
 };
 
 

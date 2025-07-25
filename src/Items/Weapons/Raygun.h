@@ -13,7 +13,7 @@
 class LaserBullet : public Projectile {
     Q_OBJECT
 public:
-    explicit LaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent = nullptr);
+    explicit LaserBullet(const QPointF& startPos, const QPointF& direction, qreal damage, QGraphicsItem *parent = nullptr, Character* shooter = nullptr);
 
 protected:
     // 重写角色碰撞处理

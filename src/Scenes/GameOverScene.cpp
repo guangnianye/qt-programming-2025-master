@@ -3,7 +3,6 @@
 //
 
 #include "GameOverScene.h"
-#include <QDebug>
 #include <QBrush>
 #include <QPen>
 #include <QFont>
@@ -24,7 +23,6 @@ GameOverScene::GameOverScene(QObject *parent, const QString& winner)
     } else {
         // 如果背景图片加载失败，使用默认的半透明黑色背景
         setBackgroundBrush(QBrush(QColor(0, 0, 0, 150)));
-        qDebug() << "Failed to load GameOverBackground.png, using default background";
     }
     
     setupUI();
@@ -93,8 +91,6 @@ void GameOverScene::updateDisplay() {
     // 设置指示文本位置
     QRectF instructionRect = instructionText->boundingRect();
     instructionText->setPos((960 - instructionRect.width()) / 2, 450); // 稍微下移
-    
-    qDebug() << "GameOverScene: Display updated for winner:" << winnerName;
 }
 
 void GameOverScene::processInput() {
@@ -110,17 +106,14 @@ void GameOverScene::keyPressEvent(QKeyEvent *event) {
     switch (event->key()) {
         case Qt::Key_R:
             // 重新开始战斗
-            qDebug() << "GameOverScene: Restart battle requested";
             emit restartBattle();
             break;
         case Qt::Key_M:
             // 返回地图选择
-            qDebug() << "GameOverScene: Return to map selection requested";
             emit returnToMapSelection();
             break;
         case Qt::Key_Escape:
             // 返回游戏模式选择
-            qDebug() << "GameOverScene: Return to mode selection requested";
             emit returnToModeSelection();
             break;
         default:

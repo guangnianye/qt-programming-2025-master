@@ -49,8 +49,7 @@ public:
     // AI相关方法
     void initializeAI(); // 初始化AI系统
     void enableAI(bool enabled); // 启用/禁用AI
-    void setAITarget(Character* aiCharacter, const QPointF& target); // 设置AI目标位置
-    void setAITargetCharacter(Character* aiCharacter, Character* target); // 设置AI目标角色
+    void updateAI(); // 更新AI行为
     bool isAIEnabled() const; // 检查AI是否启用
     
     // 游戏模式相关方法
@@ -74,6 +73,7 @@ private:
     bool isGemEquipped(Medicine* gem); // 检查宝石是否被装备
     
     void checkGameOver(); // 检查游戏是否结束
+    void immediateCleanupOnGameOver(); // 游戏结束时立即清理所有系统
 
     Map *map;
     Character *character;
