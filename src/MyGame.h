@@ -8,6 +8,7 @@
 #include <QGraphicsView>
 #include <QMainWindow>
 #include "Scenes/Scene.h"
+#include "Scenes/StartMenuScene.h"
 #include "Scenes/GameModeSelectionScene.h"
 #include "Scenes/ChooseBattlefieldScene.h"
 #include "Scenes/BattleScene.h"
@@ -21,19 +22,23 @@ public:
     explicit MyGame(QWidget *parent = nullptr);
 
 private slots:
+    void onStartGame();
     void onGameModeSelected(GameMode mode);
     void onMapSelected(int mapId);
     void onGameOver(const QString& winner);
     void onRestartBattle();
     void onReturnToModeSelection();
+    void onReturnToStartMenu();
 
 private:
+    void switchToStartMenuScene();
     void switchToGameModeSelectionScene();
     void switchToChooseMapScene();
     void switchToBattleScene(int mapId);
     void switchToGameOverScene(const QString& winner);
     
     Scene *currentScene{nullptr};
+    StartMenuScene *startMenuScene{nullptr};
     GameModeSelectionScene *gameModeSelectionScene{nullptr};
     ChooseBattlefieldScene *chooseMapScene{nullptr};
     BattleScene *battleScene{nullptr};

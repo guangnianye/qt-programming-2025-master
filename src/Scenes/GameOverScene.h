@@ -36,6 +36,7 @@ signals:
     void returnToMapSelection();
     void returnToModeSelection();
     void restartBattle();
+    void returnToStartMenu();
 };
 
 #endif //QT_PROGRAMMING_2024_GAMEOVERSCENE_H

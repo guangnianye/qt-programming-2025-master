@@ -18,7 +18,11 @@ MyGame::MyGame(QWidget *parent) : QMainWindow(parent) {
     setFixedSize(960, 640);  // 直接设置窗口大小而不是依赖view->sizeHint()
     
     
-    // 开始时进入游戏模式选择场景
+    // 开始时进入开始菜单场景
+    switchToStartMenuScene();
+}
+
+void MyGame::onStartGame() {
     switchToGameModeSelectionScene();
 }
 
@@ -30,6 +34,28 @@ void MyGame::onGameModeSelected(GameMode mode) {
 void MyGame::onMapSelected(int mapId) {
     currentMapId = mapId; // 记录当前地图ID
     switchToBattleScene(mapId);
+}
+
+void MyGame::switchToStartMenuScene() {
+    // 停止当前场景的循环
+    if (currentScene) {
+        currentScene->stopLoop();
+    }
+    
+    // 创建开始菜单场景
+    if (!startMenuScene) {
+        startMenuScene = new StartMenuScene(this);
+        // 连接信号
+        connect(startMenuScene, &StartMenuScene::playButtonClicked, 
+                this, &MyGame::onStartGame);
+    }
+    
+    // 切换场景
+    currentScene = startMenuScene;
+    view->setScene(startMenuScene);
+    
+    // 开始场景循环
+    startMenuScene->startLoop();
 }
 
 void MyGame::switchToGameModeSelectionScene() {
@@ -117,6 +143,10 @@ void MyGame::onReturnToModeSelection() {
     switchToGameModeSelectionScene();
 }
 
+void MyGame::onReturnToStartMenu() {
+    switchToStartMenuScene();
+}
+
 void MyGame::switchToGameOverScene(const QString& winner) {
     // 停止当前场景的循环
     if (currentScene) {
@@ -136,6 +166,8 @@ void MyGame::switchToGameOverScene(const QString& winner) {
             this, &MyGame::onReturnToModeSelection);
     connect(gameOverScene, &GameOverScene::restartBattle,
             this, &MyGame::onRestartBattle);
+    connect(gameOverScene, &GameOverScene::returnToStartMenu,
+            this, &MyGame::onReturnToStartMenu);
     
     // 切换场景
     currentScene = gameOverScene;

@@ -25,6 +25,8 @@ add_executable(qt_programming_2024 src/main.cpp
         src/Items/Characters/Green.h
         src/Scenes/Scene.cpp
         src/Scenes/Scene.h
+        src/Scenes/StartMenuScene.cpp
+        src/Scenes/StartMenuScene.h
         src/Scenes/BattleScene.cpp
         src/Scenes/BattleScene.h
         src/Scenes/ChooseBattlefieldScene.cpp
